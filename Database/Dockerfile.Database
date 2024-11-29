@@ -9,4 +9,4 @@ COPY . .
 RUN chmod u+x /dbconfig/attach.sh /dbconfig/health_check.sh
 
 
-ENTRYPOINT  /dbconfig/attach.sh & /opt/mssql/bin/sqlservr 
+ENTRYPOINT ["/bin/bash", "-c", "/dbconfig/attach.sh & /opt/mssql/bin/sqlservr"]
