@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sqlserver
+  labels:
+    component: sqlserver
+spec:
+  selector:
+    matchLabels:
+      component: sqlserver
+  serviceName: sqlserver
+  template:
+    metadata:
+      labels:
+        component: sqlserver
+    spec:
+      containers:
+      - name: sqlserver
+        image: datnd2711/sqlserver:prod-0.72
+        ports:
+        - containerPort: 1433
+        volumeMounts:
+        - mountPath: /var/opt/mssql/data
+          name: sqlserver-data
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+        env:
+        - name: MSSQL_SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sqlserver-secret
+              key: MSSQL_SA_PASSWORD
+        - name: ACCEPT_EULA
+          value: "Y"
+        command: [ "/bin/bash", "-c" ]
+        args:
+        - "/dbconfig/attach.sh && /opt/mssql/bin/sqlservr && tail -f /dev/null"
+      imagePullSecrets:
+      - name: my-dockerhub-secret
+      volumes:
+      - name: sqlserver-secret
+        secret:
+          secretName: sqlserver-secret
+  volumeClaimTemplates:
+  - metadata:
+      name: sqlserver-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: nfs-delete
+      resources:
+        requests:
+          storage: 3Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sqlserver-secret
+type: Opaque
+data:
+  MSSQL_SA_PASSWORD: RGF0TGFpZDIzNDU1NUBYeQ==
