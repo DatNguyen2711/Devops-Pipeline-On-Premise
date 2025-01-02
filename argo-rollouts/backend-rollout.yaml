@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  namespace: pharmacy-app
+  name: back-end
+  labels:
+    component: back-end
+spec:
+  replicas: 3
+  strategy:
+    blueGreen:
+      activeService: back-end-service-active
+      previewService: back-end-service-preview
+      autoPromotionEnabled: true
+      scaleDownDelaySeconds: 60
+  selector:
+    matchLabels:
+      component: back-end
+  template:
+    metadata:
+      labels:
+        component: back-end
+    spec:
+      containers:
+      - name: back-end
+        image: datnd2711/pharmacy-be:prod-0.82
+        ports:
+        - containerPort: 8080
+          name: http-backend
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+      imagePullSecrets:
+      - name: my-dockerhub-secret

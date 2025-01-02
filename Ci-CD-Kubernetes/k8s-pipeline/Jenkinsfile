@@ -1,0 +1,167 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: jenkins-agent
+spec:
+  containers:
+  - name: jenkins-agent
+    image: jenkins/inbound-agent:latest
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "1"
+      limits:
+        memory: "1Gi"
+        cpu: "2"
+    tty: true
+  - name: kaniko
+    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - name: kaniko-secret
+      mountPath: /kaniko/.docker
+    entrypoint: [""]
+  volumes:
+  - name: kaniko-secret
+    secret:
+      secretName: dockerhub-credentials
+'''
+        }
+    }
+
+    environment {
+        DOCKER_REGISTRY = 'datnd2711'
+        DOCKER_IMAGE_DB = "${DOCKER_REGISTRY}/sqlserver"
+        DOCKER_IMAGE_FE = "${DOCKER_REGISTRY}/pharmacy-fe"
+        DOCKER_IMAGE_BE = "${DOCKER_REGISTRY}/pharmacy-be"
+    }
+
+    stages {
+        stage('Checkout project') {
+            steps {
+                echo 'Checkout project'
+                git branch: gitBranch,
+                   credentialsId: gitlabCredential,
+                   url: gitRepository
+                sh 'git reset --hard'
+            }
+        }
+        stage('Determine Changes') {
+            steps {
+                script {
+                    def lastCommitFile = 'last_successful_commit.txt'
+                    if (!fileExists(lastCommitFile)) {
+                        echo "File ${lastCommitFile} not found, creating a new one with current commit hash"
+                        def currentCommit = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                        writeFile file: lastCommitFile, text: currentCommit
+                    }
+
+                    def lastCommit = readFile(lastCommitFile).trim()
+                    def changedFiles = sh(script: "git diff --name-only ${lastCommit} HEAD", returnStdout: true).trim().split('\n')
+                    def servicesToBuild = []
+
+                    if (changedFiles.any { it.startsWith('Medicine-Web-FE/') }) {
+                        servicesToBuild.add('Medicine-Web-FE')
+                    }
+                    if (changedFiles.any { it.startsWith('Medicine-Web/') }) {
+                        servicesToBuild.add('Medicine-Web')
+                    }
+                    if (changedFiles.any { it.startsWith('Database/') }) {
+                        servicesToBuild.add('Database')
+                    }
+
+                    env.SERVICES_TO_BUILD = servicesToBuild.join(',')
+                }
+            }
+        }
+        stage('Build and Push Images') {
+            steps {
+                container('kaniko') {
+                    script {
+                        def services = env.SERVICES_TO_BUILD.split(',')
+
+                        for (service in services) {
+                            if (service) {
+                                echo "Building and Pushing ${service}"
+                                def imageName = ''
+                                def buildPath = ''
+                                def dockerfilePath = 'Dockerfile'
+
+                                if (service == 'Medicine-Web-FE') {
+                                    imageName = DOCKER_IMAGE_FE
+                                    buildPath = '/var/lib/jenkins/workspace/app-demo/cicd-k8s-demo/Medicine-Web-FE'
+                                } else if (service == 'Medicine-Web') {
+                                    imageName = DOCKER_IMAGE_BE
+                                    buildPath = '/var/lib/jenkins/workspace/app-demo/cicd-k8s-demo/Medicine-Web'
+                                } else if (service == 'Database') {
+                                    imageName = DOCKER_IMAGE_DB
+                                    buildPath = '/var/lib/jenkins/workspace/app-demo/cicd-k8s-demo/Database'
+                                    dockerfilePath = 'Dockerfile.Database'
+                                }
+
+                                dir(buildPath) {
+                                    sh """
+                                        /kaniko/executor --context . --dockerfile ${dockerfilePath} --destination ${imageName}:${version} --cache=true
+                                    """
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage('Update Helm Values') {
+            steps {
+                script {
+                    def services = env.SERVICES_TO_BUILD.split(',')
+                    for (service in services) {
+                        if (service) {
+                            def imageName = ''
+                            def imageTag = version
+                            def imageKey = ''
+
+                            if (service == 'Medicine-Web-FE') {
+                                imageName = DOCKER_IMAGE_FE
+                                imageKey = 'frontEnd.image'
+                            } else if (service == 'Medicine-Web') {
+                                imageName = DOCKER_IMAGE_BE
+                                imageKey = 'backEnd.image'
+                            } else if (service == 'Database') {
+                                imageName = DOCKER_IMAGE_DB
+                                imageKey = 'sqlserver.image'
+                            }
+
+                            sh """
+                                yq e '.${imageKey}.repository = "${imageName}"' -i ${helmChartValue}
+                                yq e '.${imageKey}.tag = "${imageTag}"' -i ${helmChartValue}
+                            """
+                        }
+                    }
+                }
+            }
+        }
+        stage('Apply k8s') {
+            steps {
+                script {
+                    echo 'Deploy to k8s'
+                    sh "helm upgrade --install ${helmrelease} ${helmChart} -f ${helmChartValue}"
+                }
+            }
+        }
+    }
+    post {
+        success {
+            script {
+                def currentCommit = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
+                writeFile file: 'last_successful_commit.txt', text: currentCommit
+            }
+        }
+    }
+}

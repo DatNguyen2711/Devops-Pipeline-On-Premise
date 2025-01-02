@@ -1,0 +1,82 @@
+# ===========================================================================================
+# SQLServer StatefulSet Configuration
+# 
+# This configuration deploys a SQL Server instance using a StatefulSet in Kubernetes.
+# 
+# IMPORTANT: This deployment uses HashiCorp Vault to manage sensitive information such as 
+# the SQL Server 'sa' password. Secrets are injected directly into the pod using Vault 
+# Agent Injector rather than using environment variables as was done previously.
+#
+# Vault Annotations:
+# - 'vault.hashicorp.com/agent-inject': Enables Vault Agent Injector for this pod.
+# - 'vault.hashicorp.com/role': Specifies the Vault role to use for authentication.
+# - 'vault.hashicorp.com/agent-inject-secret-mssql-sa-password': Defines the Vault path 
+#   to the secret containing the SQL Server 'sa' password.
+# - 'vault.hashicorp.com/agent-inject-template-mssql-sa-password': Template that exports 
+#   the 'sa' password as an environment variable in the pod.
+#
+# For any modifications or troubleshooting related to secrets management, please ensure 
+# that the Vault configurations and Kubernetes annotations are correctly set up.
+#
+# ===========================================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: pharmacy-app
+  name: sqlserver
+  labels:
+    component: sqlserver
+spec:
+  selector:
+    matchLabels:
+      component: sqlserver
+  serviceName: sqlserver
+  template:
+    metadata:
+      labels:
+        component: sqlserver
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/role: 'sqlserver'
+        vault.hashicorp.com/agent-inject-secret-mssql-sa-password: 'secret/data/sqlserver/data'
+        vault.hashicorp.com/agent-inject-template-mssql-sa-password: |
+          {{- with secret "secret/data/sqlserver/data" -}}
+          export MSSQL_SA_PASSWORD="{{ .Data.data.MSSQL_SA_PASSWORD }}"
+          {{- end }}
+
+    spec:
+      serviceAccountName: sqlserver
+      containers:
+      - name: sqlserver
+        image: datnd2711/sqlserver:prod-0.72
+        ports:
+        - containerPort: 1433
+        volumeMounts:
+        - mountPath: /var/opt/mssql/data
+          name: sqlserver-data
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "0.5Gi"
+          limits:
+            cpu: "0.5"
+            memory: "1Gi"
+        env:
+        - name: ACCEPT_EULA
+          value: "Y"
+        command: ["/bin/bash", "-c"]
+        args:
+        - "source /vault/secrets/mssql-sa-password && /dbconfig/attach.sh && /opt/mssql/bin/sqlservr && tail -f /dev/null"
+      imagePullSecrets:
+      - name: my-dockerhub-secret
+
+  volumeClaimTemplates:
+  - metadata:
+      name: sqlserver-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: nfs-client
+      resources:
+        requests:
+          storage: 3Gi

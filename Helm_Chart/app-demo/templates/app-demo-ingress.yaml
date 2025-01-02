@@ -2,10 +2,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Values.ingress.name }}
-  namespace: {{ .Values.namespace | default "test-helm" }}
+  namespace: {{ .Values.namespace }}
   annotations:
     {{- range $key, $value := .Values.ingress.annotations }}
-      {{ $key }}: {{ $value | quote }}
+    {{ $key }}: {{ $value | quote }}
     {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.ingressClassName }}
@@ -21,16 +21,28 @@ spec:
   {{- end }}
   rules:
     {{- range .Values.ingress.rules }}
-  - host: {{ .host }}
-    http:
-      paths:
-        {{- range .paths }}
-      - path: {{ .path }}
-        pathType: {{ .pathType }}
-        backend:
-          service:
-            name: {{ .backend.serviceName }}
-            port:
-              name: {{ .backend.servicePort }}
-        {{- end }}
+    - host: {{ .host }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            {{- if .backend }}
+            backend:
+              service:
+                name: {{ .backend.serviceName }}
+                port:
+                  name: {{ .backend.servicePort }}
+            {{- else if .frontend }}
+            backend:  # Sử dụng `backend` ngay cả cho dịch vụ frontend trong Kubernetes Ingress
+              service:
+                name: {{ .frontend.serviceName }}
+                port:
+                  name: {{ .frontend.servicePort }}
+            {{- end }}
+          {{- end }}
     {{- end }}
+tls:
+- hosts:
+  - demo.datlaid.com
+  secretName: ssl-demo.datlaid.com

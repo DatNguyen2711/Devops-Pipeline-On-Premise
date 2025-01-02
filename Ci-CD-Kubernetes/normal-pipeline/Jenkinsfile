@@ -4,9 +4,9 @@ def gitBranch = 'master'
 
 // Image info in registry
 def imageGroup = 'datnd2711'
-def appName = "my-helm-app"
-def namespace = "test-helm"
-def helmrelease = "my-helm-app"
+def appName = 'my-helm-app'
+def namespace = 'test-helm'
+def helmrelease = 'my-helm-app'
 
 // harbor-registry credentials
 def registryCredential = 'dockerhub_credentials'
@@ -15,12 +15,12 @@ def gitlabCredential = 'jenkin_gitlab'
 
 dockerBuildCommand = './'
 def version = "prod-0.${BUILD_NUMBER}"
-def helmChart = "/var/lib/jenkins/workspace/app-demo/helm-app/app-demo"
-def helmChartValue = "/var/lib/jenkins/workspace/app-demo/helm-app/app-demo/value-app-demo.yaml"
+def helmChart = '/var/lib/jenkins/workspace/app-demo/helm-app/app-demo'
+def helmChartValue = '/var/lib/jenkins/workspace/app-demo/helm-app/app-demo/value-app-demo.yaml'
 
 pipeline {
     agent any
-    
+
     environment {
         DOCKER_BUILDKIT = '1' // Enable Docker BuildKit
         DOCKER_REGISTRY = 'datnd2711'
@@ -32,11 +32,11 @@ pipeline {
     stages {
         stage('Checkout project') {
             steps {
-                echo "Checkout project"
+                echo 'Checkout project'
                 git branch: gitBranch,
                    credentialsId: gitlabCredential,
                    url: gitRepository
-                sh "git reset --hard"
+                sh 'git reset --hard'
             }
         }
         stage('Determine Changes') {
@@ -46,7 +46,7 @@ pipeline {
                     def lastCommitFile = 'last_successful_commit.txt'
                     if (!fileExists(lastCommitFile)) {
                         echo "File ${lastCommitFile} not found, creating a new one with current commit hash"
-                        def currentCommit = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+                        def currentCommit = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                         writeFile file: lastCommitFile, text: currentCommit
                     }
 
@@ -54,25 +54,25 @@ pipeline {
                     def lastCommit = readFile(lastCommitFile).trim()
 
                     // Lấy danh sách các file đã thay đổi kể từ lần build cuối cùng
-                    def changedFiles = sh(script: "git diff --name-only ${lastCommit} HEAD", returnStdout: true).trim().split("\n")
+                    def changedFiles = sh(script: "git diff --name-only ${lastCommit} HEAD", returnStdout: true).trim().split('\n')
                     // Khởi tạo danh sách các dịch vụ cần build
                     def servicesToBuild = []
 
                     // Kiểm tra dịch vụ nào đã thay đổi
                     if (changedFiles.any { it.startsWith('Medicine-Web-FE/') }) {
                         servicesToBuild.add('Medicine-Web-FE')
-                    }
+                }
                     if (changedFiles.any { it.startsWith('Medicine-Web/') }) {
                         servicesToBuild.add('Medicine-Web')
-                    }
+            }
                     if (changedFiles.any { it.startsWith('Database/') }) {
                         servicesToBuild.add('Database')
-                    }
+        }
 
                     // Lưu danh sách dịch vụ cần build vào biến môi trường
                     env.SERVICES_TO_BUILD = servicesToBuild.join(',')
-                }
-            }
+    }
+}
         }
         stage('Build Images') {
             steps {
@@ -83,9 +83,9 @@ pipeline {
                     for (service in services) {
                         if (service) {
                             echo "Building ${service}"
-                            def imageName = ""
-                            def buildPath = ""
-                            def dockerfilePath = "Dockerfile"
+                            def imageName = ''
+                            def buildPath = ''
+                            def dockerfilePath = 'Dockerfile'
 
                             if (service == 'Medicine-Web-FE') {
                                 imageName = DOCKER_IMAGE_FE
@@ -96,7 +96,7 @@ pipeline {
                             } else if (service == 'Database') {
                                 imageName = DOCKER_IMAGE_DB
                                 buildPath = '/var/lib/jenkins/workspace/app-demo/cicd-k8s-demo/Database'
-                                dockerfilePath = "Dockerfile.Database"
+                                dockerfilePath = 'Dockerfile.Database'
                             }
 
                             dir(buildPath) {
@@ -116,7 +116,7 @@ pipeline {
                     for (service in services) {
                         if (service) {
                             echo "Pushing ${service}"
-                            def imageName = ""
+                            def imageName = ''
                             if (service == 'Medicine-Web-FE') {
                                 imageName = DOCKER_IMAGE_FE
                             } else if (service == 'Medicine-Web') {
@@ -125,7 +125,7 @@ pipeline {
                                 imageName = DOCKER_IMAGE_DB
                             }
 
-                            docker.withRegistry("", registryCredential) {
+                            docker.withRegistry('', registryCredential) {
                                 docker.image("${imageName}:${version}").push()
                             }
                             sh(script: "docker rmi ${imageName}:${version} -f", label: "Remove local Docker image for ${service}")
@@ -134,25 +134,25 @@ pipeline {
                 }
             }
         }
-           stage('Update Helm Values') {
+        stage('Update Helm Values') {
             steps {
                 script {
                     def services = env.SERVICES_TO_BUILD.split(',')
                     for (service in services) {
                         if (service) {
-                            def imageName = ""
+                            def imageName = ''
                             def imageTag = version
-                            def imageKey = ""
+                            def imageKey = ''
 
                             if (service == 'Medicine-Web-FE') {
                                 imageName = DOCKER_IMAGE_FE
-                                imageKey = "frontEnd.image"
+                                imageKey = 'frontEnd.image'
                             } else if (service == 'Medicine-Web') {
                                 imageName = DOCKER_IMAGE_BE
-                                imageKey = "backEnd.image"
+                                imageKey = 'backEnd.image'
                             } else if (service == 'Database') {
                                 imageName = DOCKER_IMAGE_DB
-                                imageKey = "sqlserver.image"
+                                imageKey = 'sqlserver.image'
                             }
 
                             // Update the value file directly using yq
@@ -168,7 +168,7 @@ pipeline {
         stage('Apply k8s') {
             steps {
                 script {
-                    echo "Deploy to k8s"
+                    echo 'Deploy to k8s'
                     sh "helm upgrade --install ${helmrelease} ${helmChart} -f ${helmChartValue}"
                 }
             }
@@ -178,7 +178,7 @@ pipeline {
         success {
             // Lưu lại commit hash của lần build thành công
             script {
-                def currentCommit = sh(script: "git rev-parse HEAD", returnStdout: true).trim()
+                def currentCommit = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                 writeFile file: 'last_successful_commit.txt', text: currentCommit
             }
         }

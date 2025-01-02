@@ -22,7 +22,6 @@ spec:
           imagePullPolicy: {{ .Values.sqlserver.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.sqlserver.service.port | int }}
-              name: mssql
           resources:
             requests:
               cpu: {{ .Values.sqlserver.resources.requests.cpu }}
@@ -33,12 +32,16 @@ spec:
           volumeMounts:
             - name: mssql-data
               mountPath: /var/opt/mssql
-          envFrom:
-            - secretRef:
-                name: {{ .Values.sqlserver.secret.name }}
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.secret.name }}
+                  key: MSSQL_SA_PASSWORD
           command: ["/bin/bash", "-c"]
-          args:
-          - "/dbconfig/attach.sh && /opt/mssql/bin/sqlservr && tail -f /dev/null"
+          args: ["/dbconfig/attach.sh && /opt/mssql/bin/sqlservr && tail -f /dev/null"]
       imagePullSecrets:
         - name: {{ .Values.sqlserver.imagePullSecrets.name }}
   volumeClaimTemplates:

@@ -1,0 +1,47 @@
+variables:
+  DOCKER_IMAGE: ${REGISTRY_URL}/${REGISTRY_PROJECT}/${CI_PROJECT_NAME}:${CI_COMMIT_TAG}_${CI_COMMIT_SHORT_SHA}
+  DOCKER_CONTAINER_APP: back-end
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  variables:
+    GIT_STRATEGY: clone
+  before_script:
+    - docker login ${REGISTRY_URL} -u ${REGISTRY_USER} -p ${REGISTRY_PASSWORD}
+  script:
+    - DOCKER_BUILDKIT=1 docker build --build-arg BUILDKIT_INLINE_CACHE=1
+      --cache-from $DOCKER_IMAGE
+      -t $DOCKER_IMAGE .
+    - docker push $DOCKER_IMAGE
+    - docker image rm -f $DOCKER_IMAGE
+  tags:
+    - dev-server
+  only:
+    - tags
+
+deploy:
+  stage: deploy
+  variables:
+    GIT_STRATEGY: none
+  when: manual
+  script:
+    - |
+      if [ "$GITLAB_PROJECT_OWNER_LOGIN" == "jenkins" ] || [ "$GITLAB_MAINTAINER_LOGIN" == "datlaid-maintainer" ]; then
+        ssh $SSH_USER@$SSH_SERVER_IP "docker login ${REGISTRY_URL} -u ${REGISTRY_USER} -p ${REGISTRY_PASSWORD} &&
+        cd $PATH_TO_PROJECT &&
+        docker compose down &&
+        sh get_Images_tags_BE.sh &&
+        docker compose up -d &&
+        docker images prune -f"
+      else
+        echo "Only Jenkins or Datlaid Maintainer can deploy"
+        exit 1    
+      fi
+  tags: 
+  - dev-server
+  only:
+    - tags

@@ -1,7 +1,6 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  namespace: pharmacy-app
   name: sqlserver
   labels:
     component: sqlserver
@@ -17,7 +16,7 @@ spec:
     spec:
       containers:
       - name: sqlserver
-        image: datnd2711/sqlserver:v19
+        image: datnd2711/sqlserver:prod-0.72
         ports:
         - containerPort: 1433
         volumeMounts:
@@ -38,31 +37,9 @@ spec:
               key: MSSQL_SA_PASSWORD
         - name: ACCEPT_EULA
           value: "Y"
-        livenessProbe:
-          exec:
-            command: ["/bin/bash", "-c", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $(cat /mnt/secrets-store/MSSQL_SA_PASSWORD) -Q 'SELECT 1'"]
-          initialDelaySeconds: 60
-          periodSeconds: 20
-          failureThreshold: 6
-        readinessProbe:
-          exec:
-            command: ["/bin/bash", "-c", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $(cat /mnt/secrets-store/MSSQL_SA_PASSWORD) -Q 'SELECT 1'"]
-          initialDelaySeconds: 60
-          periodSeconds: 20
-          failureThreshold: 6
-        # securityContext:
-      #   runAsUser: 1000
-      #   runAsGroup: 3000
-      #   fsGroup: 2000
-      initContainers:
-      - name: init-sqlserver
-        image: datnd2711/sqlserver:v19
-        command: ["/bin/bash", "-c"]
+        command: [ "/bin/bash", "-c" ]
         args:
         - "/dbconfig/attach.sh && /opt/mssql/bin/sqlservr && tail -f /dev/null"
-        volumeMounts:
-        - mountPath: /var/opt/mssql/data
-          name: sqlserver-data
       imagePullSecrets:
       - name: my-dockerhub-secret
       volumes:
@@ -75,7 +52,15 @@ spec:
     spec:
       accessModes:
       - ReadWriteOnce
-      storageClassName: nfs-client
+      storageClassName: nfs-delete
       resources:
         requests:
           storage: 3Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sqlserver-secret
+type: Opaque
+data:
+  MSSQL_SA_PASSWORD: RGF0TGFpZDIzNDU1NUBYeQ==

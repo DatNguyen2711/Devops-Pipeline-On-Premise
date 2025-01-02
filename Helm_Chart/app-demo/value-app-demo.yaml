@@ -1,11 +1,11 @@
 namespace: test-helm
 
 backEnd:
-  replicaCount: 3
+  replicaCount: 2
   name: back-end
   image:
     repository: datnd2711/pharmacy-be
-    tag: v3
+    tag: prod-0.82
     pullPolicy: IfNotPresent
   imagePullSecrets:
     name: my-dockerhub-secret
@@ -13,7 +13,7 @@ backEnd:
     name: back-end-service
     type: ClusterIP
     port: 8080
-    targetPort: http-backend # ensure this is an integer
+    targetPort: "http-backend" # Tên cổng cụ thể
   resources:
     requests:
       cpu: "250m"
@@ -23,11 +23,11 @@ backEnd:
       memory: "512Mi"
 
 frontEnd:
-  replicaCount: 2
+  replicaCount: 1
   name: front-end
   image:
     repository: datnd2711/pharmacy-fe
-    tag: v5
+    tag: prod-0.105
     pullPolicy: IfNotPresent
   imagePullSecrets:
     name: my-dockerhub-secret
@@ -35,7 +35,7 @@ frontEnd:
     name: front-end-service
     type: ClusterIP
     port: 80
-    targetPort: http-frontend # ensure this is an integer
+    targetPort: "http-frontend" # ensure this is an integer
   resources:
     requests:
       cpu: "100m"
@@ -47,7 +47,7 @@ frontEnd:
 sqlserver:
   image:
     repository: datnd2711/sqlserver
-    tag: v19
+    tag: prod-0.72
     pullPolicy: IfNotPresent
   imagePullSecrets:
     name: my-dockerhub-secret
@@ -66,13 +66,14 @@ sqlserver:
     size: 3Gi
   secret:
     name: sqlserver-secret
-    MSSQL_SA_PASSWORD: RGF0TGFpZDIzNDU1NUBYeQ==
+    # MSSQL_SA_PASSWORD: RGF0TGFpZDIzNDU1NUBYeQ==    // using normal secret
+    # using bitnami sealed secret
+    MSSQL_SA_PASSWORD: AgANrD5nld3z5i/GX8T4hy0va08NtZYS9hiuvMRN58FVgwR8TuwWhK/MC1qccUfIG1QO7SnkIkEDGh3+/3dg330UXaRZii3ORPuLd/j6FvAndg1y8R/AEQm/i58DQasjYy9tbhJOvCTqnon49a8NVKI3bZimrK2Xiue0Wk88zVe05PnBb2eBInn5vDTspyY8CjVz6brH46CESwxAbaR6y65AhPf7gwVegbNh13tH9maiW91w4IFSTwOAeqpXM1WSTPtkyyWpBk3zkmhZuY3Qb5v11zBT7j576b0IXhY2d47EoUAlDTYdW4np1Yn1jazkAGTpmP8TGvaf+IwOn82Y8hB2q4qsZThQRBNtFvfjkI4h8rGveYstV++nHOm0tslodqEdTjVmZviJT+ox+/RACDtnOM6ipNCzq9pclnRHTQO/me4zlB+tzpIFLxRYBSD/eCgbdq/8knb1ZDr3murqjhX5dFEE/MnAASCiL5090MChw1AHHCBjUm/wxUajrki5eAtKC5EY7WELo8YNBV3CSVaGvJ4Q5cf0SMLkXOLoHP09Ay54twAHxnUViJCY0zl6EGU6opn5MJ1nkfz7ThY8uYnN0r3+YJ61Q9ZE1IzwJETIs4LQMOTAgE5L0ZvBbNQzuFXKkdyU8ggl1LE0RJIoIXD4tZkeIYgBDXQMMojQCC7icMN76Il9cmqvqHUOSPoSl0VVT8jLbSt9OGeA74d9448o
     # command: ["/bin/bash", "-c"]
 # args: ["/dbconfig/attach.sh && /opt/mssql/bin/sqlservr && tail -f /dev/null"]
 
 
 ingress:
-
   name: pharmacy-ingress
   annotations:
     cert-manager.io/issuer: "letsencrypt-prod"
@@ -86,14 +87,15 @@ ingress:
     paths:
     - path: /
       pathType: Prefix
-      backend:
+      frontend:
         serviceName: front-end-service
-        servicePort: http-fe
+        servicePort: http-frontend
     - path: /api
       pathType: Prefix
       backend:
         serviceName: back-end-service
-        servicePort: http-be
+        servicePort: http-backend
+
 
 certManager:
   issuer:

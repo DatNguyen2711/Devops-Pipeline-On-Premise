@@ -1,5 +1,5 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   namespace: pharmacy-app
   name: front-end
@@ -7,6 +7,12 @@ metadata:
     component: front-end
 spec:
   replicas: 2
+  strategy:
+    blueGreen:
+      activeService: front-end-service-active
+      previewService: front-end-service-preview
+      autoPromotionEnabled: true
+      scaleDownDelaySeconds: 60
   selector:
     matchLabels:
       component: front-end
@@ -17,7 +23,7 @@ spec:
     spec:
       containers:
       - name: front-end
-        image: datnd2711/pharmacy-fe:v5
+        image: datnd2711/pharmacy-fe:prod-0.107
         ports:
         - containerPort: 80
           name: http-frontend

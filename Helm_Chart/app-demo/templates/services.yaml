@@ -1,47 +1,39 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.backEnd.service.name }}
-  namespace: {{ .Values.namespace }}
-  labels:
-    app: {{ .Values.backEnd.name }}
+  name: {{ .Values.backEnd.service.name | default "" }}
+  namespace: {{ .Values.namespace | default "" }}
 spec:
-  type: {{ .Values.backEnd.service.type }}
+  type: {{ .Values.backEnd.service.type | default "" }}
   ports:
-    - port: {{ .Values.backEnd.service.port }}
-      targetPort: {{ .Values.backEnd.service.targetPort }}
-      protocol: TCP
+  - port: {{ .Values.backEnd.service.port | default 0 }}
+    targetPort: {{ .Values.backEnd.service.targetPort | default 0 }}
+    protocol: TCP
   selector:
-    app: {{ .Values.backEnd.name }}
+    app: {{ .Values.backEnd.name | default "" }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.frontEnd.service.name }}
-  namespace: {{ .Values.namespace }}
-  labels:
-    app: {{ .Values.frontEnd.name }}
+  name: {{ .Values.frontEnd.service.name | default "" }}
+  namespace: {{ .Values.namespace | default "" }}
 spec:
-  type: {{ .Values.frontEnd.service.type }}
+  type: {{ .Values.frontEnd.service.type | default "" }}
   ports:
-    - port: {{ .Values.frontEnd.service.port }}
-      targetPort: {{ .Values.frontEnd.service.targetPort }}
-      protocol: TCP
+  - port: {{ .Values.frontEnd.service.port | default 0 }}
+    targetPort: {{ .Values.frontEnd.service.targetPort | default 0 }}
+    protocol: TCP
   selector:
-    app: {{ .Values.frontEnd.name }}
+    app: {{ .Values.frontEnd.name | default "" }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.sqlserver.service.name }}
-  namespace: {{ .Values.namespace }}
-  labels:
-    app: {{ .Values.sqlserver.service.name }}
+  name: {{ .Values.sqlserver.service.name | default "" }}
+  namespace: {{ .Values.namespace | default "" }}
 spec:
   type: ClusterIP
   ports:
-    - port: {{ .Values.sqlserver.service.port }}
-      targetPort: {{ .Values.sqlserver.service.port }}
-      protocol: TCP
+  - port: {{ .Values.sqlserver.service.port | default 0 }}
   selector:
-    app: {{ .Values.sqlserver.service.name }}
+    app: {{ .Values.sqlserver.service.name | default "" }}

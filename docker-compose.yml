@@ -15,6 +15,11 @@ services:
       - app-network
     ports:
       - "8080:8080"
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:8080 || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
 
   front-end:
     image: front-end:v1
@@ -28,6 +33,11 @@ services:
       - back-end
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8900 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   db:
     image: database:v1
@@ -37,14 +47,23 @@ services:
     container_name: db
     restart: always
     environment:
-      - SA_PASSWORD=DatLaid234555@Xy
-      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${SA_PASSWORD}
+      - ACCEPT_EULA=${ACCEPT_EULA}
     volumes:
-      - ./.docker/data/db:/var/opt/mssql/data
+      - db_data:/var/opt/mssql/data
     ports:
       - "1433:1433"
     networks:
       - db-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "chmod +x /dbconfig/health_check.sh & ./dbconfig/health_check.sh",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 # docker exec -it db /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P DatLaid234555@Xy
 networks:

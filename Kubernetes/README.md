@@ -12,6 +12,11 @@
 
 *Cri-o*
 
+*Bitnami/Sealed Secret*
+
+*Hashicorp Vault*
+
+
 Step 1: First, config the ConnectionStrings at back-end
 
 ```bash
