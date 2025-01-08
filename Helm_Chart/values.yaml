@@ -1,11 +1,11 @@
-namespace: library-chart  
+namespace: myapp
 
 backEnd:
   replicaCount: 2
   name: back-end
   image:
     repository: datnd2711/pharmacy-be
-    tag: prod-0.82
+    tag: prod-0.90
     pullPolicy: IfNotPresent
   imagePullSecrets:
     name: my-dockerhub-secret
@@ -27,7 +27,7 @@ frontEnd:
   name: front-end
   image:
     repository: datnd2711/pharmacy-fe
-    tag: prod-0.63
+    tag: prod-0.110
     pullPolicy: IfNotPresent
   imagePullSecrets:
     name: my-dockerhub-secret
@@ -56,11 +56,11 @@ sqlserver:
     port: 1433
   resources:
     requests:
-      cpu: "500m"
-      memory: "1Gi"
+      cpu: "250m"
+      memory: "500m"
     limits:
-      cpu: "1"
-      memory: "2Gi"
+      cpu: "0.5"
+      memory: "1Gi"
   volume:
     storageClassName: nfs-retain
     size: 3Gi
@@ -76,7 +76,7 @@ sqlserver:
 ingress:
   name: pharmacy-ingress
   annotations:
-    cert-manager.io/cluster-issuer: "ca-issuer"
+     cert-manager.io/cluster-issuer: "ca-issuer"
     # kubernetes.io/ingress.class: "nginx"
   ingressClassName: nginx
   tls:
@@ -97,7 +97,7 @@ ingress:
         serviceName: back-end-service
         servicePort: http-backend
 
-
+ 
 hpa:
   enabled: true
   name: autoscale-hpa
@@ -133,3 +133,5 @@ resourceQuota:
   cpuLimits: "3"
   memoryLimits: "5Gi"
   
+service:
+  port: "8080"
