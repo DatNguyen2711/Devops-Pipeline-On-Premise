@@ -1,0 +1,1 @@
+{{- include "shared-chart.hpa" (merge . (dict "Values" .Values.frontEnd.hpa "namespace" .Values.namespace)) -}}

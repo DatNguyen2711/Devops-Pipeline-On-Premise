@@ -1,0 +1,6 @@
+dependencies:
+- name: shared-chart
+  repository: file://../../../Helm_shared_template/common-library
+  version: 0.1.0
+digest: sha256:d21fadc7485ad2cd2193f1e6bfe39e38d065233d997e4fccaea415071d3eb4d5
+generated: "2025-01-09T10:06:16.869901303Z"

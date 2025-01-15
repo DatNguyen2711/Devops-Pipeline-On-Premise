@@ -1,0 +1,72 @@
+namespace: myapp
+
+frontEnd:
+  replicaCount: 2
+  image:
+    repository: datnd2711/pharmacy-fe
+    tag: prod-0.110
+    pullPolicy: IfNotPresent
+  imagePullSecrets:
+    name: my-dockerhub-secret
+  container:
+    name: http-frontend
+    port: 80
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+  service:
+    port: 80
+    name: front-end-service
+    type: ClusterIP
+    targetPort: "http-frontend"
+
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: "ca-issuer"
+    ingressClassName: nginx
+    tls:
+    - hosts:
+      - demo.datlaid.com
+      secretName: ssl-demo.datlaid.com
+    rules:
+    - host: demo.datlaid.com
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          serviceName: fe-service
+
+
+
+  hpa:
+    name: fe-scale
+    enabled: true
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: front-end
+    minReplicas: 2
+    maxReplicas: 3
+    metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    behavior:
+      scaleDown:
+        policies:
+        - periodSeconds: 60
+          type: Pods
+          value: 3
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+        stabilizationWindowSeconds: 200

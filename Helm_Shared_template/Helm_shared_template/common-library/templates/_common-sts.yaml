@@ -1,0 +1,57 @@
+{{- define "shared-chart.statefulset" -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.sqlserver.service.name }}-statefulset
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.sqlserver.service.name }}
+spec:
+  serviceName: {{ .Values.sqlserver.service.name }}
+  replicas: {{ .Values.sqlserver.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ .Values.sqlserver.service.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.sqlserver.service.name }}
+    spec:
+      containers:
+        - name: {{ .Values.sqlserver.service.name }}
+          image: {{ .Values.sqlserver.image.repository }}:{{ .Values.sqlserver.image.tag }}
+          imagePullPolicy: {{ .Values.sqlserver.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.sqlserver.service.port | int }}
+          resources:
+            requests:
+              cpu: {{ .Values.sqlserver.resources.requests.cpu }}
+              memory: {{ .Values.sqlserver.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.sqlserver.resources.limits.cpu }}
+              memory: {{ .Values.sqlserver.resources.limits.memory }}
+          volumeMounts:
+            - name: mssql-data
+              mountPath: /var/opt/mssql
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.sqlserver.secret.name }}
+                  key: MSSQL_SA_PASSWORD
+          command: ["/bin/bash", "-c"]
+          args: ["/dbconfig/attach.sh && /opt/mssql/bin/sqlservr && tail -f /dev/null"]
+      imagePullSecrets:
+        - name: {{ .Values.sqlserver.imagePullSecrets.name }}
+  volumeClaimTemplates:
+    - metadata:
+        name: mssql-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: {{ .Values.sqlserver.volume.storageClassName }}
+        resources:
+          requests:
+            storage: {{ .Values.sqlserver.volume.size }}
+{{- end -}}

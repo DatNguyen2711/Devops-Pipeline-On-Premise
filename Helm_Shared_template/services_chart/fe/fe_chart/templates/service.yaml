@@ -1,0 +1,1 @@
+{{- include "shared-chart.service" (merge . (dict "Values" .Values.frontEnd.service "namespace" .Values.namespace)) -}}

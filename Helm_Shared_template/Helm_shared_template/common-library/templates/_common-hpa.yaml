@@ -1,0 +1,35 @@
+{{- define "shared-chart.hpa" -}}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Values.name }}-hpa
+  namespace: {{ .Values.namespace | default "default" }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.scaleTargetRef.name }}
+  minReplicas: {{ .Values.minReplicas }}
+  maxReplicas: {{ .Values.maxReplicas }}
+  metrics:
+  {{- range .Values.metrics }}
+    - type: {{ .type }}
+      {{- if eq .type "Resource" }}
+      resource:
+        name: {{ .resource.name }}
+        target:
+          type: {{ .resource.target.type }}
+          {{- if .resource.target.averageUtilization }}
+          averageUtilization: {{ .resource.target.averageUtilization }}
+          {{- end }}
+      {{- end }}
+  {{- end }}
+  {{- if .Values.behavior }}
+  behavior:
+{{ toYaml .Values.behavior | indent 4 }}
+  {{- end }}
+{{- end -}}
+
+
+
+

@@ -1,0 +1,1 @@
+{{- include "shared-chart.ingress" (merge . (dict "Values" .Values.frontEnd.ingress "namespace" .Values.namespace)) -}}
