@@ -30,7 +30,4 @@ spec:
             name: back-end-service
             port:
               name: http-be
-tls:
-- hosts:
-  - demo.datlaid.com
-  secretName: ssl-demo.datlaid.com
+
