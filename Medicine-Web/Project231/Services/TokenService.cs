@@ -28,6 +28,7 @@ namespace Project231.Services
             };
             SecurityToken validatedToken;
             var claimsPrincipal = tokenHandler.ValidateToken(token, tokenValidationParameters, out validatedToken);
+            
             return claimsPrincipal;
         }
     }
