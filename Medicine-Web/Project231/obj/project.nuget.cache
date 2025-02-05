@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "CWYmOtab/LU=",
+  "dgSpecHash": "R9mwfwqgwsU=",
   "success": true,
   "projectFilePath": "/workspaces/Devops-Pipeline-On-Premise/Medicine-Web/Project231/Project231.csproj",
   "expectedPackageFiles": [
@@ -58,6 +58,7 @@
     "/home/codespace/.nuget/packages/opentelemetry/1.11.1/opentelemetry.1.11.1.nupkg.sha512",
     "/home/codespace/.nuget/packages/opentelemetry.api/1.11.1/opentelemetry.api.1.11.1.nupkg.sha512",
     "/home/codespace/.nuget/packages/opentelemetry.api.providerbuilderextensions/1.11.1/opentelemetry.api.providerbuilderextensions.1.11.1.nupkg.sha512",
+    "/home/codespace/.nuget/packages/opentelemetry.exporter.opentelemetryprotocol/1.11.1/opentelemetry.exporter.opentelemetryprotocol.1.11.1.nupkg.sha512",
     "/home/codespace/.nuget/packages/opentelemetry.exporter.prometheus.aspnetcore/1.11.0-beta.1/opentelemetry.exporter.prometheus.aspnetcore.1.11.0-beta.1.nupkg.sha512",
     "/home/codespace/.nuget/packages/opentelemetry.extensions.hosting/1.11.1/opentelemetry.extensions.hosting.1.11.1.nupkg.sha512",
     "/home/codespace/.nuget/packages/swashbuckle.aspnetcore/6.4.0/swashbuckle.aspnetcore.6.4.0.nupkg.sha512",
