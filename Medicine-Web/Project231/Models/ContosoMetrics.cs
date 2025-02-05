@@ -10,9 +10,9 @@ public class ContosoMetrics
         _productSoldCounter = meter.CreateCounter<int>("contoso.product.sold");
     }
 
-    public void UserLogin(string email, int quantity)
+    public void MedicineSold(string productName, int quantity)
     {
         _productSoldCounter.Add(quantity,
-            new KeyValuePair<string, object?>("contoso.product.name", email));
+            new KeyValuePair<string, object?>("contoso.product.name", productName));
     }
 }

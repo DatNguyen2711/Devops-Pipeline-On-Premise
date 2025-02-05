@@ -13,18 +13,21 @@ namespace Project231.Controller
         private readonly ProjectPrn231Context _context;
         private readonly TokenService _tokenService;
         private readonly IConfiguration _configuration;
+        private readonly ContosoMetrics _metrics; // Thêm _metrics
 
-        public MedicineController(ProjectPrn231Context context, IConfiguration configuration)
+
+        public MedicineController(ProjectPrn231Context context, IConfiguration configuration, ContosoMetrics metrics)
         {
             _context = context;
             _configuration = configuration;
             _tokenService = new TokenService(_configuration["JWT:Secret"]);
+            _metrics = metrics; // Gán _metrics
 
         }
 
 
         [HttpGet("GetAllMedicines")]
-        public IActionResult GetAllMedicines( [FromHeader] string Authorization)
+        public IActionResult GetAllMedicines([FromHeader] string Authorization)
         {
             try
             {
@@ -32,7 +35,7 @@ namespace Project231.Controller
                 {
                     return BadRequest(new { message = "Authorization header is missing." });
                 }
-                var medicines = _context.Medicines.ToList(); 
+                var medicines = _context.Medicines.ToList();
 
                 var medicineDTOs = medicines.Select(m => new MedicineDTO
                 {
@@ -137,6 +140,8 @@ namespace Project231.Controller
                 return StatusCode(500, new { message = "An error occurred while updating medicine: " + ex.Message });
             }
         }
+
+
         [HttpPut("DeleteMedicine/{id}")]
         public IActionResult DeleteMedicine(int id, [FromHeader] string Authorization)
         {
@@ -162,7 +167,7 @@ namespace Project231.Controller
                     return NotFound(new { message = "medicine not found." });
                 }
 
-                medicine.Status = 0; 
+                medicine.Status = 0;
                 _context.SaveChanges();
 
                 return Ok(new { message = "medicine deleted successfully.", medicine });
@@ -173,5 +178,55 @@ namespace Project231.Controller
             }
         }
 
+        [HttpPost("complete-sale")]
+        public IActionResult CompleteSale(Medicine model, [FromHeader] string Authorization)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(Authorization))
+                {
+                    return BadRequest(new { message = "Authorization header is missing." });
+                }
+
+                var token = Authorization.Split(' ')[1];
+                var claimsPrincipal = _tokenService.DecodeToken(token);
+
+                var userRole = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+                if (userRole != "Admin" && userRole != "Sales") // Kiểm tra quyền của người dùng
+                {
+                    return Unauthorized(new { message = "You do not have permission to perform this action." });
+                }
+
+                // Lấy thông tin thuốc từ model
+                var medicine = _context.Medicines.FirstOrDefault(m => m.Name == model.Name);
+                if (medicine == null)
+                {
+                    return NotFound(new { message = "Medicine not found." });
+                }
+
+                // Giảm số lượng thuốc trong kho khi bán
+                if (medicine.Quantity >= model.Quantity)
+                {
+                    medicine.Quantity -= model.Quantity; // Cập nhật số lượng thuốc trong kho
+                    _context.SaveChanges();
+
+                    // Ghi lại số lượng thuốc bán được vào metrics
+                    _metrics.MedicineSold(medicine.Name, model.Quantity ?? 0);
+
+                    return Ok(new { message = "Sale completed successfully.", medicine });
+                }
+                else
+                {
+                    return BadRequest(new { message = "Not enough stock available." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred while completing the sale: " + ex.Message });
+            }
+
+
+
+        }
     }
 }
