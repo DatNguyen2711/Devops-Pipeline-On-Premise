@@ -26,7 +26,7 @@ public partial class ProjectPrn231Context : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Server=db,1433; Database=MedicineWeb; User Id=sa; Password=DatLaid234555@Xy;MultipleActiveResultSets=true;TrustServerCertificate=True");
+        => optionsBuilder.UseSqlServer("Server=sqlserver.myapp.svc.cluster.local,1433; Database=MedicineWeb; User Id=sa; Password=DatLaid234555@Xy;MultipleActiveResultSets=true;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
