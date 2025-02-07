@@ -23,9 +23,9 @@ This project utilizes the following technologies:
 | <img src="https://dyltqmyl993wv.cloudfront.net/assets/stacks/sealed-secrets/img/sealed-secrets-stack-220x234.png" alt="Bitnami Sealed Secrets" width="20" height="20"> **Bitnami Sealed Secrets** | Bitnami Sealed Secrets  (Secure Secret Management) |
 | <img src="https://miro.medium.com/v2/resize:fit:1066/1*FAFtnHl7L7CcIRBzny3zMw.png" alt="Kaniko" width="20" height="20"> **Kaniko** | Build container images in Kubernetes without Docker daemon |
 | <img src="https://www.netdata.cloud/img/vault.svg" alt="Vault" width="20" height="20"> **HashiCorp Vault**  | Secret management |
-| <img src="https://statics.cdn.200lab.io/2023/09/open-telemetry-1.jpeg" alt="OpenTelemetry" width="20" height="20"> **OpenTelemetry** | Observability and Monitoring      |
+| <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiMVVYYgj_LY437FrV-KwNX9-rul33uYnRtgbk40J4GlNG29dkWyvnbtGgyBfrUqGW6e4hhbNO-WxGcOXNltbDyXDjpkCcugy0HcMxIYxBFCuQOKkMx8P2oIcL1D-hSYcZig4sGTkiFwG4/s1600/opentelemetry-stacked-color.png" alt="OpenTelemetry" width="20" height="20"> **OpenTelemetry** | Observability and Monitoring      |
 | <img src="https://banner2.cleanpng.com/20190423/os/kisspng-prometheus-grafana-kubernetes-application-software-1713896726589.webp" alt="Prometheus" width="20" height="20"> **Prometheus** | Metrics collection and monitoring |
-| <img src="https://news.cloud365.vn/wp-content/uploads/2019/11/grafana-logo.png" alt="Grafana" width="20" height="20"> **Grafana** | Data visualization and monitoring |
+| <img src="https://www.skedler.com/blog/wp-content/uploads/2021/08/grafana-logo.png" alt="Grafana" width="20" height="20"> **Grafana** | Data visualization and monitoring |
 
 # Getting Started
 
