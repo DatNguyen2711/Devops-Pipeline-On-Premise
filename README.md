@@ -6,7 +6,7 @@ This project utilizes the following technologies:
 |------------------|------------------------------------|
 | <img src="https://upload.wikimedia.org/wikipedia/commons/7/7d/Microsoft_.NET_logo.svg" alt=".NET Core API 8" width="20" height="20"> **.NET Core API 8** | Backend                 |
 | <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRcBiBI248rgjtRfFgxc8WapC-w7npSGPi6GnV1_VUMww&s" alt="ReactJS" width="20" height="20"> **ReactJS** | Frontend                |
-| <img src="https://viettelidc.com.vn//uploadimage/Root/root/06-01-toan-tap-ve-sql-server-cho-nguoi-moi-bat-dau.jpg" alt="SQL Server" width="20" height="20"> **SQL Server** | Database                         |
+| <img src="https://aptech.vn/wp-content/uploads/2021/04/sql-server.png" alt="SQL Server" width="20" height="20"> **SQL Server** | Database                         |
 | <img src="https://techvccloud.mediacdn.vn/2018/7/13/docker-1531468887078532266614-0-14-400-726-crop-15314688919081778546108.png" alt="Docker" width="20" height="20"> **Docker** | Containerization                 |
 | <img src="https://www.logicata.com/wp-content/uploads/2020/08/Amazon-EC2@4x-e1593195270371.png" alt="AWS EC2" width="20" height="20"> **AWS EC2** | Cloud infrastructure (server for Harbor)             |
 | <img src="https://static-00.iconduck.com/assets.00/harbor-icon-1018x1024-15bgc40q.png" alt="Harbor Registry" width="20" height="20"> **Harbor Registry** | Container registry               |
@@ -16,7 +16,7 @@ This project utilizes the following technologies:
 | <img src="https://encore.dev/assets/resources/kubernetes_cover.png" alt="Kubernetes" width="20" height="20"> **Kubernetes** | Container orchestration          |
 | <img src="https://encore.dev/assets/resources/terraform_cover.png" alt="Terraform" width="20" height="20"> **Terraform** | Infrastructure as Code (IaC)     |
 | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Groovy-logo.svg/640px-Groovy-logo.svg.png" alt="Groovy" width="20" height="20"> **Groovy** | Scripting (Jenkins pipeline script)             |
-| <img src="https://andrewlock.net/content/images/2019/03/helm.png" alt="Helm" width="20" height="20"> **Helm** | Kubernetes package management    |
+| <img src="https://banner2.cleanpng.com/20180711/ysg/aawkk38yb.webp" alt="Helm" width="20" height="20"> **Helm** | Kubernetes package management    |
 | <img src="https://tenten.vn/tin-tuc/wp-content/uploads/2023/09/tao-video-AI-bang-D-ID.jpg" alt="VMWare" width="20" height="20"> **VMWare** | Virtualization (100% infra using this)                   |
 | <img src="https://cdn.prod.website-files.com/6203daf47137054c031fa0e6/63c7f4ab9471e63a01d7d285_argo-icon-color.png" alt="Argo CD" width="20" height="20"> **ArgoCD** | Gitops            |
 | <img src="https://images.viblo.asia/6d8f3347-3bac-4d34-98a3-c25ab17ddb7c.png" alt="Argo Rollout" width="20" height="20"> **Argo-Rollout** | Blue/Green Deployment             |
