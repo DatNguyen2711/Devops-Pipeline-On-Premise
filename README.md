@@ -16,13 +16,16 @@ This project utilizes the following technologies:
 | <img src="https://encore.dev/assets/resources/kubernetes_cover.png" alt="Kubernetes" width="20" height="20"> **Kubernetes** | Container orchestration          |
 | <img src="https://encore.dev/assets/resources/terraform_cover.png" alt="Terraform" width="20" height="20"> **Terraform** | Infrastructure as Code (IaC)     |
 | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Groovy-logo.svg/640px-Groovy-logo.svg.png" alt="Groovy" width="20" height="20"> **Groovy** | Scripting (Jenkins pipeline script)             |
-| <img src="https://andrewlock.net/content/images/2019/helm.png" alt="Helm" width="20" height="20"> **Helm** | Kubernetes package management    |
+| <img src="https://andrewlock.net/content/images/2019/03/helm.png" alt="Helm" width="20" height="20"> **Helm** | Kubernetes package management    |
 | <img src="https://tenten.vn/tin-tuc/wp-content/uploads/2023/09/tao-video-AI-bang-D-ID.jpg" alt="VMWare" width="20" height="20"> **VMWare** | Virtualization (100% infra using this)                   |
 | <img src="https://cdn.prod.website-files.com/6203daf47137054c031fa0e6/63c7f4ab9471e63a01d7d285_argo-icon-color.png" alt="Argo CD" width="20" height="20"> **ArgoCD** | Gitops            |
 | <img src="https://images.viblo.asia/6d8f3347-3bac-4d34-98a3-c25ab17ddb7c.png" alt="Argo Rollout" width="20" height="20"> **Argo-Rollout** | Blue/Green Deployment             |
 | <img src="https://dyltqmyl993wv.cloudfront.net/assets/stacks/sealed-secrets/img/sealed-secrets-stack-220x234.png" alt="Bitnami Sealed Secrets" width="20" height="20"> **Bitnami Sealed Secrets** | Bitnami Sealed Secrets  (Secure Secret Management) |
 | <img src="https://miro.medium.com/v2/resize:fit:1066/1*FAFtnHl7L7CcIRBzny3zMw.png" alt="Kaniko" width="20" height="20"> **Kaniko** | Build container images in Kubernetes without Docker daemon |
-| <img src="https://www.netdata.cloud/img/vault.svg" alt="Vault" width="20" height="20"> **HashiCorp Vault**  | Secret management
+| <img src="https://www.netdata.cloud/img/vault.svg" alt="Vault" width="20" height="20"> **HashiCorp Vault**  | Secret management |
+| <img src="https://statics.cdn.200lab.io/2023/09/open-telemetry-1.jpeg" alt="OpenTelemetry" width="20" height="20"> **OpenTelemetry** | Observability and Monitoring      |
+| <img src="https://banner2.cleanpng.com/20190423/os/kisspng-prometheus-grafana-kubernetes-application-software-1713896726589.webp" alt="Prometheus" width="20" height="20"> **Prometheus** | Metrics collection and monitoring |
+| <img src="https://news.cloud365.vn/wp-content/uploads/2019/11/grafana-logo.png" alt="Grafana" width="20" height="20"> **Grafana** | Data visualization and monitoring |
 
 # Getting Started
 
