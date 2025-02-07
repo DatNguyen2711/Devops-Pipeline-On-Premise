@@ -1,4 +1,4 @@
-## Monitor App on K8S cluster
+## Monitor .NET 8 Application on K8S cluster
 
 ### Tech using
 
