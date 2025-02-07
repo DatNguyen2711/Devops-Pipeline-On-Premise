@@ -19,8 +19,6 @@ This project utilizes the following technologies:
 | <img src="https://banner2.cleanpng.com/20180711/ysg/aawkk38yb.webp" alt="Helm" width="20" height="20"> **Helm** | Kubernetes package management    |
 | <img src="https://tenten.vn/tin-tuc/wp-content/uploads/2023/09/tao-video-AI-bang-D-ID.jpg" alt="VMWare" width="20" height="20"> **VMWare** | Virtualization (100% infra using this)                   |
 | <img src="https://cdn.prod.website-files.com/6203daf47137054c031fa0e6/63c7f4ab9471e63a01d7d285_argo-icon-color.png" alt="Argo CD" width="20" height="20"> **ArgoCD** | Gitops            |
-| <img src="https://images.viblo.asia/6d8f3347-3bac-4d34-98a3-c25ab17ddb7c.png" alt="Argo Rollout" width="20" height="20"> **Argo-Rollout** | Blue/Green Deployment             |
-| <img src="https://dyltqmyl993wv.cloudfront.net/assets/stacks/sealed-secrets/img/sealed-secrets-stack-220x234.png" alt="Bitnami Sealed Secrets" width="20" height="20"> **Bitnami Sealed Secrets** | Bitnami Sealed Secrets  (Secure Secret Management) |
 | <img src="https://miro.medium.com/v2/resize:fit:1066/1*FAFtnHl7L7CcIRBzny3zMw.png" alt="Kaniko" width="20" height="20"> **Kaniko** | Build container images in Kubernetes without Docker daemon |
 | <img src="https://www.netdata.cloud/img/vault.svg" alt="Vault" width="20" height="20"> **HashiCorp Vault**  | Secret management |
 | <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiMVVYYgj_LY437FrV-KwNX9-rul33uYnRtgbk40J4GlNG29dkWyvnbtGgyBfrUqGW6e4hhbNO-WxGcOXNltbDyXDjpkCcugy0HcMxIYxBFCuQOKkMx8P2oIcL1D-hSYcZig4sGTkiFwG4/s1600/opentelemetry-stacked-color.png" alt="OpenTelemetry" width="20" height="20"> **OpenTelemetry** | Observability and Monitoring      |
