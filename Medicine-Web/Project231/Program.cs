@@ -7,9 +7,8 @@ using Microsoft.AspNetCore.Http.Features;
 using OpenTelemetry.Metrics;
 using System.Diagnostics.Metrics;
 
-var builder = WebApplication.CreateBuilder(args);
 
-// Khai báo OpenTelemetry và Meter cho custom metrics
+var builder = WebApplication.CreateBuilder(args);
 var meter = new Meter("CustomMetrics", "1.0.0");
 var requestCounter = meter.CreateCounter<int>("http_requests_total", "requests", "Count of HTTP requests");
 var requestDuration = meter.CreateHistogram<double>("http_request_duration_seconds", "seconds", "Duration of HTTP requests");
@@ -76,9 +75,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.MapPrometheusScrapingEndpoint("/api/backend/metrics");
 
+
+                     
 app.Use(async (context, next) =>
 {
     var tagsFeature = context.Features.Get<IHttpMetricsTagsFeature>();
@@ -97,6 +97,8 @@ app.Use(async (context, next) =>
 
     await next.Invoke();
 });
+
+
 
 // Middleware để theo dõi số request đang xử lý
 app.Use(async (context, next) =>
@@ -146,11 +148,13 @@ app.Use(async (context, next) =>
     dbQueryDuration.Record(dbStopwatch.Elapsed.TotalSeconds);
 });
 
-app.MapGet("/", () => "Hello OpenTelemetry! ticks:" + DateTime.Now.Ticks.ToString()[^3..]);
-
+app.MapGet("/", () => "Hello OpenTelemetry! ticks:"
+                     + DateTime.Now.Ticks.ToString()[^3..]);
 app.UseHttpsRedirection();
 app.UseCors("CORSPolicy");
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.Run();
