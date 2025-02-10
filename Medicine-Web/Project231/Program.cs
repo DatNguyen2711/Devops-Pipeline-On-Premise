@@ -1,10 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Project231.Models;
-using Project231.Services;
 using OpenTelemetry.Metrics;
 using Microsoft.AspNetCore.Http.Features;
-using OpenTelemetry.Metrics;
 using System.Diagnostics.Metrics;
 
 
@@ -56,17 +54,37 @@ builder.Services.AddCors(opts =>
 builder.Services.AddOpenTelemetry()
     .WithMetrics(builder =>
     {
-        builder.AddPrometheusExporter();
+        builder.AddPrometheusExporter();  // Thêm Prometheus exporter
 
+        // Thêm các Meter mặc định cho Kestrel và HTTP server
         builder.AddMeter("Microsoft.AspNetCore.Hosting",
                          "Microsoft.AspNetCore.Server.Kestrel");
+
         builder.AddView("http.server.request.duration",
             new ExplicitBucketHistogramConfiguration
             {
                 Boundaries = new double[] { 0, 0.005, 0.01, 0.025, 0.05,
-                       0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 }
+                                           0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 }
             });
+
+        // Thêm metrics tùy chỉnh
+        var meter = new Meter("CustomMetrics", "1.0.0");
+
+        // 1. Counter để đếm số request HTTP
+        var requestCounter = meter.CreateCounter<int>("http_requests_total", "requests", "Total HTTP requests processed");
+
+        // 2. Histogram để đo thời gian xử lý request
+        var requestDuration = meter.CreateHistogram<double>("http_request_duration_seconds", "seconds", "Duration of HTTP requests");
+
+        // 3. Gauge để theo dõi số lượng request đang xử lý
+        var activeRequests = meter.CreateUpDownCounter<int>("http_server_active_requests", "requests", "Number of active requests");
+
+        // 4. Histogram để đo thời gian truy vấn database
+        var dbQueryDuration = meter.CreateHistogram<double>("database_query_duration_seconds", "seconds", "Duration of database queries");
+
+        builder.AddMeter("CustomMetrics");  // Đảm bảo meter này được sử dụng
     });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -75,10 +93,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.MapPrometheusScrapingEndpoint("/api/backend/metrics");
+app.UseOpenTelemetryPrometheusScrapingEndpoint("/api/backend/metrics");
 
 
-                     
+
 app.Use(async (context, next) =>
 {
     var tagsFeature = context.Features.Get<IHttpMetricsTagsFeature>();
@@ -101,19 +119,27 @@ app.Use(async (context, next) =>
 
 
 // Middleware để theo dõi số request đang xử lý
+// Middleware để theo dõi số lượng request HTTP
 app.Use(async (context, next) =>
 {
-    activeRequests.Add(1); // Tăng số lượng request đang xử lý
-
     var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-    await next(); // Tiếp tục xử lý request
+    
+    // Tăng số lượng request đang xử lý
+    activeRequests.Add(1);
+    
+    await next();
+    
     stopwatch.Stop();
-
-    activeRequests.Add(-1); // Giảm số lượng request sau khi hoàn thành
-
+    
+    // Giảm số lượng request đang xử lý
+    activeRequests.Add(-1);
+    
+    // Ghi lại thời gian xử lý request
+    requestDuration.Record(stopwatch.Elapsed.TotalSeconds);
+    
     int statusCode = context.Response.StatusCode;
 
-    // Ghi lại tổng số request theo mã trạng thái
+    // Ghi lại tổng số request theo mã trạng thái HTTP
     if (statusCode >= 400 && statusCode < 500)
     {
         requestCounter.Add(1, new KeyValuePair<string, object>("status", "4xx"));
@@ -130,21 +156,19 @@ app.Use(async (context, next) =>
     {
         requestCounter.Add(1, new KeyValuePair<string, object>("status", "2xx"));
     }
-
-    // Ghi lại thời gian xử lý request
-    requestDuration.Record(stopwatch.Elapsed.TotalSeconds, new KeyValuePair<string, object>("status", statusCode.ToString()));
 });
 
-// Middleware để theo dõi thời gian query database
+// Middleware để theo dõi thời gian truy vấn database
 app.Use(async (context, next) =>
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ProjectPrn231Context>();
-
+    
     var dbStopwatch = System.Diagnostics.Stopwatch.StartNew();
     await next();
     dbStopwatch.Stop();
-
+    
+    // Ghi lại thời gian truy vấn database
     dbQueryDuration.Record(dbStopwatch.Elapsed.TotalSeconds);
 });
 
