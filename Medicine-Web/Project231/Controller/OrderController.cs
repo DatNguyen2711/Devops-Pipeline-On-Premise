@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Metrics;
 using Project231.DTO;
 using Project231.Models;
 using Project231.Services;
+using System.Diagnostics.Metrics;
 using System.Net;
+using OpenTelemetry.Metrics;
 
 namespace Project231.Controller
 {
@@ -16,12 +19,23 @@ namespace Project231.Controller
         private readonly ProjectPrn231Context _context;
         private readonly IConfiguration _configuration;
         private readonly TokenService _tokenService;
+        private readonly Meter _meter;
+        private readonly Counter<int> _canceledOrderCounter;
 
+        private readonly Counter<int> _orderCounter;
+        private readonly Counter<int> _medicineSalesCounter;
         public OrderController(ProjectPrn231Context context, IConfiguration configuration)
         {
             _context = context;
             _configuration = configuration;
             _tokenService = new TokenService(_configuration["JWT:Secret"]);
+            var meterProvider = new Meter("OrderMetrics", "1.0.0");
+
+            _meter = meterProvider;
+            _orderCounter = _meter.CreateCounter<int>("successful_orders_total", "orders", "Total successful orders");
+            _medicineSalesCounter = _meter.CreateCounter<int>("medicine_sales_total", "count", "Total number of medicines sold");
+            _canceledOrderCounter = _meter.CreateCounter<int>("canceled_orders_total", "orders", "Total canceled orders");
+
         }
 
         [HttpPost("PlaceOrder/{userId}")]
@@ -64,21 +78,20 @@ namespace Project231.Controller
                 };
                 _context.Orders.Add(order);
                 _context.SaveChanges();
-                foreach (var item in cartItems)
+
+                // Cập nhật số lượng thuốc bán được
+                var orderItems = _context.OrderItems.Where(oi => oi.OrderId == order.Id).ToList();
+                foreach (var item in orderItems)
                 {
-                    OrderItem orderItem = new OrderItem
+                    var medicine = _context.Medicines.FirstOrDefault(m => m.Id == item.MedicineId);
+                    if (medicine != null)
                     {
-                        OrderId = order.Id,
-                        MedicineId = item.MedicineId,
-                        UnitPrice = item.UnitPrice,
-                        Discount = item.Discount,
-                        Quantity = item.Quantity,
-                        TotalPrice = item.UnitPrice * item.Quantity,
-                    };
-                    _context.OrderItems.Add(orderItem);
+                        _medicineSalesCounter.Add(item.Quantity ?? 0, new KeyValuePair<string, object>("medicine_name", medicine.Name));
+                    }
                 }
-                _context.Carts.RemoveRange(cartItems);
-                _context.SaveChanges();
+
+                // Cập nhật số lượng đơn hàng thành công
+                _orderCounter.Add(1);
                 return Ok(new { message = "Order successfully placed." });
             }
             catch (Exception ex)
@@ -166,14 +179,14 @@ namespace Project231.Controller
             {
                 var p = _context.Medicines
                     .SingleOrDefault(x => x.Id == item.Key);
-                if(p != null)
+                if (p != null)
                 {
                     products.Add(new MedicineDTO
                     {
                         Manufacturer = p.Manufacturer,
                         Name = p.Name,
-                        Quantity=item.Value,
-                        Discount=item.Value,
+                        Quantity = item.Value,
+                        Discount = item.Value,
                         UnitPrice = p.UnitPrice,
                         Id = p.Id
                     });
@@ -219,6 +232,8 @@ namespace Project231.Controller
                 }
                 order.OrderStatus = "Canceled";
                 _context.SaveChanges();
+                _canceledOrderCounter.Add(1);
+
                 return Ok(new { message = "Order cancel successfully." });
             }
             catch (Exception ex)

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Project231.DTO;
 using Project231.Models;
 using Project231.Services;
+using OpenTelemetry.Metrics;
+using System.Diagnostics.Metrics;
 
 namespace Project231.Controller
 {
@@ -13,16 +15,17 @@ namespace Project231.Controller
         private readonly ProjectPrn231Context _context;
         private readonly TokenService _tokenService;
         private readonly IConfiguration _configuration;
-        private readonly ContosoMetrics _metrics; // Thêm _metrics
+        private readonly Meter _meter;
+        private readonly Counter<int> _medicineSalesCounter;
 
-
-        public MedicineController(ProjectPrn231Context context, IConfiguration configuration, ContosoMetrics metrics)
+        public MedicineController(ProjectPrn231Context context)
         {
             _context = context;
-            _configuration = configuration;
-            _tokenService = new TokenService(_configuration["JWT:Secret"]);
-            _metrics = metrics; // Gán _metrics
 
+            // Khởi tạo Meter và Counter từ OpenTelemetry
+            var meterProvider = new Meter("CustomMetrics", "1.0.0");
+            _meter = meterProvider;
+            _medicineSalesCounter = _meter.CreateCounter<int>("medicine_sales_total", "count", "Total number of medicines sold");
         }
 
 
@@ -178,7 +181,7 @@ namespace Project231.Controller
             }
         }
 
-        [HttpPost("complete-sale")]
+        [HttpPost("CompleteSale")]
         public IActionResult CompleteSale(Medicine model, [FromHeader] string Authorization)
         {
             try
@@ -211,7 +214,7 @@ namespace Project231.Controller
                     _context.SaveChanges();
 
                     // Ghi lại số lượng thuốc bán được vào metrics
-                    _metrics.MedicineSold(medicine.Name, model.Quantity ?? 0);
+                    _medicineSalesCounter.Add(model.Quantity ?? 0, new KeyValuePair<string, object>("medicine_name", medicine.Name));
 
                     return Ok(new { message = "Sale completed successfully.", medicine });
                 }
@@ -224,6 +227,7 @@ namespace Project231.Controller
             {
                 return StatusCode(500, new { message = "An error occurred while completing the sale: " + ex.Message });
             }
+
 
 
 

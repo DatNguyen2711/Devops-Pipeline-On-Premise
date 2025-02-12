@@ -12,8 +12,11 @@ var requestCounter = meter.CreateCounter<int>("http_requests_total", "requests",
 var requestDuration = meter.CreateHistogram<double>("http_request_duration_seconds", "seconds", "Duration of HTTP requests");
 var dbQueryDuration = meter.CreateHistogram<double>("database_query_duration_seconds", "seconds", "Duration of database queries");
 var activeRequests = meter.CreateUpDownCounter<int>("active_requests", "requests", "Number of active requests");
+// Tạo các Counter cho số lượng đơn hàng và số lượng thuốc bán ra
+// var orderCounter = meter.CreateCounter<int>("successful_orders_total", "orders", "Total number of successful orders");
+// var medicineSalesCounter = meter.CreateCounter<int>("medicine_sales_total", "count", "Total number of medicines sold");
 
-builder.Services.AddSingleton<ContosoMetrics>();
+// builder.Services.AddSingleton<ContosoMetrics>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -81,6 +84,8 @@ builder.Services.AddOpenTelemetry()
 
         // 4. Histogram để đo thời gian truy vấn database
         var dbQueryDuration = meter.CreateHistogram<double>("database_query_duration_seconds", "seconds", "Duration of database queries");
+        // var orderCounter = meter.CreateCounter<int>("successful_orders_total", "orders", "Total number of successful orders");
+        // var medicineSalesCounter = meter.CreateCounter<int>("medicine_sales_total", "count", "Total number of medicines sold");
 
         builder.AddMeter("CustomMetrics");  // Đảm bảo meter này được sử dụng
     });
@@ -123,20 +128,20 @@ app.Use(async (context, next) =>
 app.Use(async (context, next) =>
 {
     var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-    
+
     // Tăng số lượng request đang xử lý
     activeRequests.Add(1);
-    
+
     await next();
-    
+
     stopwatch.Stop();
-    
+
     // Giảm số lượng request đang xử lý
     activeRequests.Add(-1);
-    
+
     // Ghi lại thời gian xử lý request
     requestDuration.Record(stopwatch.Elapsed.TotalSeconds);
-    
+
     int statusCode = context.Response.StatusCode;
 
     // Ghi lại tổng số request theo mã trạng thái HTTP
@@ -163,11 +168,11 @@ app.Use(async (context, next) =>
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ProjectPrn231Context>();
-    
+
     var dbStopwatch = System.Diagnostics.Stopwatch.StartNew();
     await next();
     dbStopwatch.Stop();
-    
+
     // Ghi lại thời gian truy vấn database
     dbQueryDuration.Record(dbStopwatch.Elapsed.TotalSeconds);
 });
