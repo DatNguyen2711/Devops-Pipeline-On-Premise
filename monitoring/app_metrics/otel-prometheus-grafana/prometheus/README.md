@@ -8,6 +8,8 @@
 
 *Grafana*
 
+![alt text](image-4.png)
+
 
 Step 1: First, pull prometheus-grafana stack chart 
 
