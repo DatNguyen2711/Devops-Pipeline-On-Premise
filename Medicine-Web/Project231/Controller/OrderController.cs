@@ -1,13 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OpenTelemetry.Metrics;
 using Project231.DTO;
 using Project231.Models;
 using Project231.Services;
-using System.Diagnostics.Metrics;
-using System.Net;
-using OpenTelemetry.Metrics;
 
 namespace Project231.Controller
 {
@@ -19,24 +15,18 @@ namespace Project231.Controller
         private readonly ProjectPrn231Context _context;
         private readonly IConfiguration _configuration;
         private readonly TokenService _tokenService;
-        private readonly Meter _meter;
-        private readonly Counter<int> _canceledOrderCounter;
 
         private readonly Counter<int> _orderCounter;
-        private readonly Counter<int> _medicineSalesCounter;
-        public OrderController(ProjectPrn231Context context, IConfiguration configuration)
+        public OrderController(ProjectPrn231Context context, IConfiguration configuration, Meter meter)
         {
             _context = context;
             _configuration = configuration;
             _tokenService = new TokenService(_configuration["JWT:Secret"]);
-            var meterProvider = new Meter("OrderMetrics", "1.0.0");
 
-            _meter = meterProvider;
-            _orderCounter = _meter.CreateCounter<int>("successful_orders_total", "orders", "Total successful orders");
-            _medicineSalesCounter = _meter.CreateCounter<int>("medicine_sales_total", "count", "Total number of medicines sold");
-            _canceledOrderCounter = _meter.CreateCounter<int>("canceled_orders_total", "orders", "Total canceled orders");
-
+            // Sử dụng Meter từ DI
+            _orderCounter = meter.CreateCounter<int>("successful_orders_total", "orders", "Total successful orders");
         }
+
 
         [HttpPost("PlaceOrder/{userId}")]
         public IActionResult PlaceOrder(int userId, [FromHeader] string Authorization)
@@ -78,19 +68,21 @@ namespace Project231.Controller
                 };
                 _context.Orders.Add(order);
                 _context.SaveChanges();
-
-                // Cập nhật số lượng thuốc bán được
-                var orderItems = _context.OrderItems.Where(oi => oi.OrderId == order.Id).ToList();
-                foreach (var item in orderItems)
+                foreach (var item in cartItems)
                 {
-                    var medicine = _context.Medicines.FirstOrDefault(m => m.Id == item.MedicineId);
-                    if (medicine != null)
+                    OrderItem orderItem = new OrderItem
                     {
-                        _medicineSalesCounter.Add(item.Quantity ?? 0, new KeyValuePair<string, object>("medicine_name", medicine.Name));
-                    }
+                        OrderId = order.Id,
+                        MedicineId = item.MedicineId,
+                        UnitPrice = item.UnitPrice,
+                        Discount = item.Discount,
+                        Quantity = item.Quantity,
+                        TotalPrice = item.UnitPrice * item.Quantity,
+                    };
+                    _context.OrderItems.Add(orderItem);
                 }
-
-                // Cập nhật số lượng đơn hàng thành công
+                _context.Carts.RemoveRange(cartItems);
+                _context.SaveChanges();
                 _orderCounter.Add(1);
                 return Ok(new { message = "Order successfully placed." });
             }
@@ -139,6 +131,7 @@ namespace Project231.Controller
 
                 order.OrderStatus = "Confirmed";
                 _context.SaveChanges();
+                _orderCounter.Add(1);
 
                 return Ok(new { message = "Order confirmed successfully." });
             }
@@ -232,8 +225,6 @@ namespace Project231.Controller
                 }
                 order.OrderStatus = "Canceled";
                 _context.SaveChanges();
-                _canceledOrderCounter.Add(1);
-
                 return Ok(new { message = "Order cancel successfully." });
             }
             catch (Exception ex)

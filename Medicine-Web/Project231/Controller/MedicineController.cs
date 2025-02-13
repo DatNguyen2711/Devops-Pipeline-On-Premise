@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Project231.DTO;
 using Project231.Models;
 using Project231.Services;
-using OpenTelemetry.Metrics;
 using System.Diagnostics.Metrics;
 
 namespace Project231.Controller
@@ -15,8 +13,6 @@ namespace Project231.Controller
         private readonly ProjectPrn231Context _context;
         private readonly TokenService _tokenService;
         private readonly IConfiguration _configuration;
-        private readonly Meter _meter;
-        private readonly Counter<int> _medicineSalesCounter;
 
         public MedicineController(ProjectPrn231Context context)
         {
@@ -24,8 +20,6 @@ namespace Project231.Controller
 
             // Khởi tạo Meter và Counter từ OpenTelemetry
             var meterProvider = new Meter("CustomMetrics", "1.0.0");
-            _meter = meterProvider;
-            _medicineSalesCounter = _meter.CreateCounter<int>("medicine_sales_total", "count", "Total number of medicines sold");
         }
 
 
@@ -213,8 +207,6 @@ namespace Project231.Controller
                     medicine.Quantity -= model.Quantity; // Cập nhật số lượng thuốc trong kho
                     _context.SaveChanges();
 
-                    // Ghi lại số lượng thuốc bán được vào metrics
-                    _medicineSalesCounter.Add(model.Quantity ?? 0, new KeyValuePair<string, object>("medicine_name", medicine.Name));
 
                     return Ok(new { message = "Sale completed successfully.", medicine });
                 }

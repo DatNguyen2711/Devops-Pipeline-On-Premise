@@ -1,27 +1,29 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Project231.Models;
 using OpenTelemetry.Metrics;
-using Microsoft.AspNetCore.Http.Features;
+using Project231.Models;
 using System.Diagnostics.Metrics;
 
-
 var builder = WebApplication.CreateBuilder(args);
+
+// Tạo Meter để theo dõi metrics
 var meter = new Meter("CustomMetrics", "1.0.0");
 var requestCounter = meter.CreateCounter<int>("http_requests_total", "requests", "Count of HTTP requests");
 var requestDuration = meter.CreateHistogram<double>("http_request_duration_seconds", "seconds", "Duration of HTTP requests");
 var dbQueryDuration = meter.CreateHistogram<double>("database_query_duration_seconds", "seconds", "Duration of database queries");
 var activeRequests = meter.CreateUpDownCounter<int>("active_requests", "requests", "Number of active requests");
-// Tạo các Counter cho số lượng đơn hàng và số lượng thuốc bán ra
-// var orderCounter = meter.CreateCounter<int>("successful_orders_total", "orders", "Total number of successful orders");
-// var medicineSalesCounter = meter.CreateCounter<int>("medicine_sales_total", "count", "Total number of medicines sold");
 
-// builder.Services.AddSingleton<ContosoMetrics>();
+builder.Services.AddSingleton(meter);
 
+// Thêm các dịch vụ cho ứng dụng
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<ProjectPrn231Context>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MyDb")));
+builder.Services.AddDbContext<ProjectPrn231Context>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("MyDb"))
+);
+
+// Cấu hình Swagger với JWT
 builder.Services.AddSwaggerGen(s =>
 {
     s.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -34,155 +36,104 @@ builder.Services.AddSwaggerGen(s =>
     });
 
     s.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
             {
+                Reference = new OpenApiReference
                 {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
-                    },
-                    Array.Empty<string>()
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
                 }
-            });
+            },
+            Array.Empty<string>()
+        }
+    });
 });
+
+// CORS Policy
 builder.Services.AddCors(opts =>
 {
-    opts.AddPolicy("CORSPolicy", builder =>
-    builder.AllowAnyHeader().AllowAnyMethod().
-    AllowCredentials().SetIsOriginAllowed((host) => true));
+    opts.AddPolicy("CORSPolicy", policy =>
+        policy.AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials()
+              .SetIsOriginAllowed(_ => true)
+    );
 });
+
+// OpenTelemetry - Metrics
 builder.Services.AddOpenTelemetry()
-    .WithMetrics(builder =>
+    .WithMetrics(metricsBuilder =>
     {
-        builder.AddPrometheusExporter();  // Thêm Prometheus exporter
-
-        // Thêm các Meter mặc định cho Kestrel và HTTP server
-        builder.AddMeter("Microsoft.AspNetCore.Hosting",
-                         "Microsoft.AspNetCore.Server.Kestrel");
-
-        builder.AddView("http.server.request.duration",
-            new ExplicitBucketHistogramConfiguration
-            {
-                Boundaries = new double[] { 0, 0.005, 0.01, 0.025, 0.05,
-                                           0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 }
-            });
-
-        // Thêm metrics tùy chỉnh
-        var meter = new Meter("CustomMetrics", "1.0.0");
-
-        // 1. Counter để đếm số request HTTP
-        var requestCounter = meter.CreateCounter<int>("http_requests_total", "requests", "Total HTTP requests processed");
-
-        // 2. Histogram để đo thời gian xử lý request
-        var requestDuration = meter.CreateHistogram<double>("http_request_duration_seconds", "seconds", "Duration of HTTP requests");
-
-        // 3. Gauge để theo dõi số lượng request đang xử lý
-        var activeRequests = meter.CreateUpDownCounter<int>("http_server_active_requests", "requests", "Number of active requests");
-
-        // 4. Histogram để đo thời gian truy vấn database
-        var dbQueryDuration = meter.CreateHistogram<double>("database_query_duration_seconds", "seconds", "Duration of database queries");
-        // var orderCounter = meter.CreateCounter<int>("successful_orders_total", "orders", "Total number of successful orders");
-        // var medicineSalesCounter = meter.CreateCounter<int>("medicine_sales_total", "count", "Total number of medicines sold");
-
-        builder.AddMeter("CustomMetrics");  // Đảm bảo meter này được sử dụng
+        metricsBuilder.AddPrometheusExporter();
+        metricsBuilder.AddMeter("Microsoft.AspNetCore.Hosting", "Microsoft.AspNetCore.Server.Kestrel");
+        metricsBuilder.AddView("http.server.request.duration", new ExplicitBucketHistogramConfiguration
+        {
+            Boundaries = new double[] { 0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1, 2.5, 5, 7.5, 10 }
+        });
+        metricsBuilder.AddMeter("CustomMetrics", "OrderMetrics");
     });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseHttpsRedirection();
+app.UseRouting(); // 🔹 Đảm bảo routing hoạt động đúng
+app.UseCors("CORSPolicy");
+
+// 🔹 Bổ sung Authentication nếu dùng JWT
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Expose Prometheus metrics
 app.UseOpenTelemetryPrometheusScrapingEndpoint("/api/backend/metrics");
 
-
-
-app.Use(async (context, next) =>
-{
-    var tagsFeature = context.Features.Get<IHttpMetricsTagsFeature>();
-    if (tagsFeature != null)
-    {
-        var source = context.Request.Query["utm_medium"].ToString() switch
-        {
-            "" => "none",
-            "social" => "social",
-            "email" => "email",
-            "organic" => "organic",
-            _ => "other"
-        };
-        tagsFeature.Tags.Add(new KeyValuePair<string, object?>("mkt_medium", source));
-    }
-
-    await next.Invoke();
-});
-
-
-
-// Middleware để theo dõi số request đang xử lý
-// Middleware để theo dõi số lượng request HTTP
+// Middleware tracking request
 app.Use(async (context, next) =>
 {
     var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-
-    // Tăng số lượng request đang xử lý
-    activeRequests.Add(1);
+    activeRequests.Add(1); // Tăng số lượng request đang xử lý
 
     await next();
 
     stopwatch.Stop();
-
-    // Giảm số lượng request đang xử lý
-    activeRequests.Add(-1);
-
-    // Ghi lại thời gian xử lý request
+    activeRequests.Add(-1); // Giảm số lượng request đang xử lý
     requestDuration.Record(stopwatch.Elapsed.TotalSeconds);
 
-    int statusCode = context.Response.StatusCode;
-
     // Ghi lại tổng số request theo mã trạng thái HTTP
-    if (statusCode >= 400 && statusCode < 500)
+    string statusLabel = context.Response.StatusCode switch
     {
-        requestCounter.Add(1, new KeyValuePair<string, object>("status", "4xx"));
-    }
-    else if (statusCode >= 500)
-    {
-        requestCounter.Add(1, new KeyValuePair<string, object>("status", "5xx"));
-    }
-    else if (statusCode >= 300 && statusCode < 400)
-    {
-        requestCounter.Add(1, new KeyValuePair<string, object>("status", "3xx"));
-    }
-    else
-    {
-        requestCounter.Add(1, new KeyValuePair<string, object>("status", "2xx"));
-    }
+        >= 400 and < 500 => "4xx",
+        >= 500 => "5xx",
+        >= 300 and < 400 => "3xx",
+        _ => "2xx"
+    };
+    requestCounter.Add(1, new KeyValuePair<string, object>("status", statusLabel));
 });
 
-// Middleware để theo dõi thời gian truy vấn database
+// Middleware theo dõi database queries (chỉnh lại)
 app.Use(async (context, next) =>
 {
+    await next(); // Chạy request trước khi đo
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ProjectPrn231Context>();
 
     var dbStopwatch = System.Diagnostics.Stopwatch.StartNew();
-    await next();
+    await dbContext.Database.ExecuteSqlRawAsync("SELECT 1"); // Query test nhanh
     dbStopwatch.Stop();
 
-    // Ghi lại thời gian truy vấn database
     dbQueryDuration.Record(dbStopwatch.Elapsed.TotalSeconds);
 });
 
-app.MapGet("/", () => "Hello OpenTelemetry! ticks:"
-                     + DateTime.Now.Ticks.ToString()[^3..]);
-app.UseHttpsRedirection();
-app.UseCors("CORSPolicy");
-
-app.UseAuthorization();
+// API endpoint test
+app.MapGet("/", () => "Hello OpenTelemetry! ticks:" + DateTime.Now.Ticks.ToString()[^3..]);
 
 app.MapControllers();
 
