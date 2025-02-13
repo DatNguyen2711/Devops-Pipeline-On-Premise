@@ -17,6 +17,8 @@ namespace Project231.Controller
         private readonly TokenService _tokenService;
 
         private readonly Counter<int> _orderCounter;
+        private readonly Counter<int> _orderCanceledCounter;
+
         public OrderController(ProjectPrn231Context context, IConfiguration configuration, Meter meter)
         {
             _context = context;
@@ -25,6 +27,8 @@ namespace Project231.Controller
 
             // Sử dụng Meter từ DI
             _orderCounter = meter.CreateCounter<int>("successful_orders_total", "orders", "Total successful orders");
+            _orderCanceledCounter = meter.CreateCounter<int>("cancled_orders_total", "orders", "Total successful orders");
+
         }
 
 
@@ -201,6 +205,7 @@ namespace Project231.Controller
                 }
                 order.OrderStatus = "Deleted";
                 _context.SaveChanges();
+                _orderCanceledCounter.Add(1);
                 return Ok(new { message = "Order delete successfully." });
             }
             catch (Exception ex)
