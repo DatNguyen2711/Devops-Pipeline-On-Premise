@@ -28,7 +28,7 @@ Add job at prometheus.prometheusSpec in the values.yaml file
     additionalScrapeConfigs: 
     - job_name: 'backend-metrics'
       scheme: http
-      metrics_path: /metrics 
+      metrics_path: /api/backend/metrics 
       static_configs:
         - targets: ['back-end-service.myapp.svc.cluster.local:8080'] #your app service running on k8s cluster
       # metric_relabel_configs:
