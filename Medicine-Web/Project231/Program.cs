@@ -6,7 +6,6 @@ using System.Diagnostics.Metrics;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Tạo Meter để theo dõi metrics
 var meter = new Meter("CustomMetrics", "1.0.0");
 var requestCounter = meter.CreateCounter<int>("http_requests_total", "requests", "Count of HTTP requests");
 var requestDuration = meter.CreateHistogram<double>("http_request_duration_seconds", "seconds", "Duration of HTTP requests");
@@ -15,7 +14,6 @@ var activeRequests = meter.CreateUpDownCounter<int>("active_requests", "requests
 
 builder.Services.AddSingleton(meter);
 
-// Thêm các dịch vụ cho ứng dụng
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -23,7 +21,6 @@ builder.Services.AddDbContext<ProjectPrn231Context>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("MyDb"))
 );
 
-// Cấu hình Swagger với JWT
 builder.Services.AddSwaggerGen(s =>
 {
     s.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -85,10 +82,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseRouting(); // 🔹 Đảm bảo routing hoạt động đúng
+app.UseRouting(); 
 app.UseCors("CORSPolicy");
 
-// 🔹 Bổ sung Authentication nếu dùng JWT
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -132,7 +128,6 @@ app.Use(async (context, next) =>
     dbQueryDuration.Record(dbStopwatch.Elapsed.TotalSeconds);
 });
 
-// API endpoint test
 app.MapGet("/", () => "Hello OpenTelemetry! ticks:" + DateTime.Now.Ticks.ToString()[^3..]);
 
 app.MapControllers();

@@ -25,7 +25,6 @@ namespace Project231.Controller
             _configuration = configuration;
             _tokenService = new TokenService(_configuration["JWT:Secret"]);
 
-            // Sử dụng Meter từ DI
             _orderCounter = meter.CreateCounter<int>("successful_orders_total", "orders", "Total successful orders");
             _orderCanceledCounter = meter.CreateCounter<int>("cancled_orders_total", "orders", "Total successful orders");
 
