@@ -93,7 +93,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // Expose Prometheus metrics
-app.UseOpenTelemetryPrometheusScrapingEndpoint("/api/backend/metrics");
+app.MapPrometheusScrapingEndpoint("/api/backend/metrics");
 
 // Middleware tracking request
 app.Use(async (context, next) =>
