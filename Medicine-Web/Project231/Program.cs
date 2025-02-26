@@ -4,8 +4,16 @@ using Project231.Models;
 using Project231.Services;
 using OpenTelemetry.Metrics;
 using Microsoft.AspNetCore.Http.Features;
+using OpenTelemetry.Metrics;
+using System.Diagnostics.Metrics;
+
 
 var builder = WebApplication.CreateBuilder(args);
+var meter = new Meter("CustomMetrics", "1.0.0");
+var requestCounter = meter.CreateCounter<int>("http_requests_total", "requests", "Count of HTTP requests");
+var requestDuration = meter.CreateHistogram<double>("http_request_duration_seconds", "seconds", "Duration of HTTP requests");
+var dbQueryDuration = meter.CreateHistogram<double>("database_query_duration_seconds", "seconds", "Duration of database queries");
+var activeRequests = meter.CreateUpDownCounter<int>("active_requests", "requests", "Number of active requests");
 
 builder.Services.AddSingleton<ContosoMetrics>();
 
@@ -67,7 +75,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.MapPrometheusScrapingEndpoint();
+app.MapPrometheusScrapingEndpoint("/api/backend/metrics");
 
 
                      
@@ -92,6 +100,53 @@ app.Use(async (context, next) =>
 
 
 
+// Middleware để theo dõi số request đang xử lý
+app.Use(async (context, next) =>
+{
+    activeRequests.Add(1); // Tăng số lượng request đang xử lý
+
+    var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+    await next(); // Tiếp tục xử lý request
+    stopwatch.Stop();
+
+    activeRequests.Add(-1); // Giảm số lượng request sau khi hoàn thành
+
+    int statusCode = context.Response.StatusCode;
+
+    // Ghi lại tổng số request theo mã trạng thái
+    if (statusCode >= 400 && statusCode < 500)
+    {
+        requestCounter.Add(1, new KeyValuePair<string, object>("status", "4xx"));
+    }
+    else if (statusCode >= 500)
+    {
+        requestCounter.Add(1, new KeyValuePair<string, object>("status", "5xx"));
+    }
+    else if (statusCode >= 300 && statusCode < 400)
+    {
+        requestCounter.Add(1, new KeyValuePair<string, object>("status", "3xx"));
+    }
+    else
+    {
+        requestCounter.Add(1, new KeyValuePair<string, object>("status", "2xx"));
+    }
+
+    // Ghi lại thời gian xử lý request
+    requestDuration.Record(stopwatch.Elapsed.TotalSeconds, new KeyValuePair<string, object>("status", statusCode.ToString()));
+});
+
+// Middleware để theo dõi thời gian query database
+app.Use(async (context, next) =>
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ProjectPrn231Context>();
+
+    var dbStopwatch = System.Diagnostics.Stopwatch.StartNew();
+    await next();
+    dbStopwatch.Stop();
+
+    dbQueryDuration.Record(dbStopwatch.Elapsed.TotalSeconds);
+});
 
 app.MapGet("/", () => "Hello OpenTelemetry! ticks:"
                      + DateTime.Now.Ticks.ToString()[^3..]);

@@ -5,7 +5,7 @@ backEnd:
   name: back-end
   image:
     repository: datnd2711/pharmacy-be
-    tag: prod-0.92
+    tag: prod-0.104
     pullPolicy: IfNotPresent
   imagePullSecrets:
     name: my-dockerhub-secret
