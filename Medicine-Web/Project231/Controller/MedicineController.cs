@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Project231.DTO;
 using Project231.Models;
 using Project231.Services;
+using System.Diagnostics.Metrics;
 
 namespace Project231.Controller
 {
@@ -13,16 +13,13 @@ namespace Project231.Controller
         private readonly ProjectPrn231Context _context;
         private readonly TokenService _tokenService;
         private readonly IConfiguration _configuration;
-        private readonly ContosoMetrics _metrics; // Thêm _metrics
 
-
-        public MedicineController(ProjectPrn231Context context, IConfiguration configuration, ContosoMetrics metrics)
+        public MedicineController(ProjectPrn231Context context)
         {
             _context = context;
-            _configuration = configuration;
-            _tokenService = new TokenService(_configuration["JWT:Secret"]);
-            _metrics = metrics; // Gán _metrics
 
+            // Khởi tạo Meter và Counter từ OpenTelemetry
+            var meterProvider = new Meter("CustomMetrics", "1.0.0");
         }
 
 
@@ -178,7 +175,7 @@ namespace Project231.Controller
             }
         }
 
-        [HttpPost("complete-sale")]
+        [HttpPost("CompleteSale")]
         public IActionResult CompleteSale(Medicine model, [FromHeader] string Authorization)
         {
             try
@@ -210,8 +207,6 @@ namespace Project231.Controller
                     medicine.Quantity -= model.Quantity; // Cập nhật số lượng thuốc trong kho
                     _context.SaveChanges();
 
-                    // Ghi lại số lượng thuốc bán được vào metrics
-                    _metrics.MedicineSold(medicine.Name, model.Quantity ?? 0);
 
                     return Ok(new { message = "Sale completed successfully.", medicine });
                 }
@@ -224,6 +219,7 @@ namespace Project231.Controller
             {
                 return StatusCode(500, new { message = "An error occurred while completing the sale: " + ex.Message });
             }
+
 
 
 

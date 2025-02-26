@@ -6,9 +6,14 @@ namespace Project231.Models;
 
 public partial class ProjectPrn231Context : DbContext
 {
-    public ProjectPrn231Context()
+  private readonly IConfiguration _configuration;
+
+    public ProjectPrn231Context(DbContextOptions<ProjectPrn231Context> options, IConfiguration configuration)
+        : base(options)
     {
+        _configuration = configuration;
     }
+
 
     public ProjectPrn231Context(DbContextOptions<ProjectPrn231Context> options)
         : base(options)
@@ -26,8 +31,13 @@ public partial class ProjectPrn231Context : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Server=sqlserver.myapp.svc.cluster.local,1433; Database=MedicineWeb; User Id=sa; Password=DatLaid234555@Xy;MultipleActiveResultSets=true;TrustServerCertificate=True");
-
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            var connectionString = _configuration.GetConnectionString("MyDb");
+            optionsBuilder.UseSqlServer(connectionString);
+        }
+    }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Cart>(entity =>

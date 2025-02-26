@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Diagnostics.Metrics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project231.DTO;
 using Project231.Models;
 using Project231.Services;
-using System.Net;
 
 namespace Project231.Controller
 {
@@ -17,12 +16,20 @@ namespace Project231.Controller
         private readonly IConfiguration _configuration;
         private readonly TokenService _tokenService;
 
-        public OrderController(ProjectPrn231Context context, IConfiguration configuration)
+        private readonly Counter<int> _orderCounter;
+        private readonly Counter<int> _orderCanceledCounter;
+
+        public OrderController(ProjectPrn231Context context, IConfiguration configuration, Meter meter)
         {
             _context = context;
             _configuration = configuration;
             _tokenService = new TokenService(_configuration["JWT:Secret"]);
+
+            _orderCounter = meter.CreateCounter<int>("successful_orders_total", "orders", "Total successful orders");
+            _orderCanceledCounter = meter.CreateCounter<int>("cancled_orders_total", "orders", "Total successful orders");
+
         }
+
 
         [HttpPost("PlaceOrder/{userId}")]
         public IActionResult PlaceOrder(int userId, [FromHeader] string Authorization)
@@ -79,6 +86,7 @@ namespace Project231.Controller
                 }
                 _context.Carts.RemoveRange(cartItems);
                 _context.SaveChanges();
+                _orderCounter.Add(1);
                 return Ok(new { message = "Order successfully placed." });
             }
             catch (Exception ex)
@@ -126,6 +134,7 @@ namespace Project231.Controller
 
                 order.OrderStatus = "Confirmed";
                 _context.SaveChanges();
+                _orderCounter.Add(1);
 
                 return Ok(new { message = "Order confirmed successfully." });
             }
@@ -166,14 +175,14 @@ namespace Project231.Controller
             {
                 var p = _context.Medicines
                     .SingleOrDefault(x => x.Id == item.Key);
-                if(p != null)
+                if (p != null)
                 {
                     products.Add(new MedicineDTO
                     {
                         Manufacturer = p.Manufacturer,
                         Name = p.Name,
-                        Quantity=item.Value,
-                        Discount=item.Value,
+                        Quantity = item.Value,
+                        Discount = item.Value,
                         UnitPrice = p.UnitPrice,
                         Id = p.Id
                     });
@@ -195,6 +204,7 @@ namespace Project231.Controller
                 }
                 order.OrderStatus = "Deleted";
                 _context.SaveChanges();
+                _orderCanceledCounter.Add(1);
                 return Ok(new { message = "Order delete successfully." });
             }
             catch (Exception ex)

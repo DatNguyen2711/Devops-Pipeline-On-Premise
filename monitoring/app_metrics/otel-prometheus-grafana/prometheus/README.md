@@ -8,6 +8,8 @@
 
 *Grafana*
 
+![alt text](image-4.png)
+
 
 Step 1: First, pull prometheus-grafana stack chart 
 
@@ -58,4 +60,4 @@ Add Dashboard for ASP.NET and see the results:
 ![alt text](image-1.png)
 
 
-![alt text](image-2.png)
+![alt text](image-3.png)
