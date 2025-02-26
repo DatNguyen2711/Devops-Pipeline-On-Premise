@@ -421,27 +421,7 @@
           "fieldMinMax": false,
           "mappings": []
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "sum(cancled_orders_orders_total)"
-            },
-            "properties": []
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "sum(successful_orders_orders_total)"
-            },
-            "properties": [
-              {
-                "id": "mappings",
-                "value": []
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -455,8 +435,6 @@
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Value",
-          "sortDesc": true,
           "values": [
             "value"
           ]
@@ -478,7 +456,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(successful_orders_orders_total)",
+          "expr": "label_replace(sum(successful_orders_orders_total), \"status\", \"Successful Orders\", \"status\", \"(.*)\")\r\n",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -489,7 +467,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(cancled_orders_orders_total)",
+          "expr": "label_replace(sum(cancled_orders_orders_total), \"status\", \"Canceled Orders\", \"status\", \"(.*)\")\r\n",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1614,6 +1592,6 @@
   "timezone": "",
   "title": "ASP.NET",
   "uid": "KdDACDp4z",
-  "version": 10,
+  "version": 12,
   "weekStart": ""
 }
