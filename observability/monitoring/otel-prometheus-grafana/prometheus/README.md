@@ -59,5 +59,5 @@ Add Dashboard for ASP.NET and see the results:
 
 ![alt text](image-1.png)
 
-
-![alt text](image-3.png)
+![alt text](image-5.png)
+![alt text](image-7.png)

@@ -25,7 +25,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 29,
+  "id": 59,
   "links": [],
   "panels": [
     {
@@ -100,10 +100,15 @@
       "id": 62,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
+          "calcs": [
+            "max",
+            "count"
+          ],
+          "displayMode": "table",
           "placement": "right",
-          "showLegend": true
+          "showLegend": true,
+          "sortBy": "Count",
+          "sortDesc": false
         },
         "tooltip": {
           "mode": "single",
@@ -1592,6 +1597,6 @@
   "timezone": "",
   "title": "ASP.NET",
   "uid": "KdDACDp4z",
-  "version": 12,
+  "version": 3,
   "weekStart": ""
 }
