@@ -50,15 +50,6 @@ helm -n monitoring install prometheus-grafana-stack -f values.yaml kube-promethe
 
 ---
 
-## 📊 Add `Max` and `Count` Columns in Grafana Panel
-
-- Truy cập vào phần **Legend** trong panel
-- Trong trường **Values**, chọn **Max** và **Count**
-
-![alt text](image-8.png)
-
----
-
 ## 🔍 Verify Prometheus & Grafana are Running
 
 ![alt text](image.png)
@@ -68,6 +59,16 @@ helm -n monitoring install prometheus-grafana-stack -f values.yaml kube-promethe
 ## 🧪 Add ASP.NET Dashboard & Observe Metrics
 
 ![alt text](image-1.png)
+
+
+---
+
+## 📊 Add `Max` and `Count` Columns in Grafana Panel
+
+- Truy cập vào phần **Legend** trong panel
+- Trong trường **Values**, chọn **Max** và **Count**
+
+![alt text](image-8.png)
 
 ![alt text](image-5.png)
 
