@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nosql-client
+  namespace: dev-srd
+  annotations:
+    nginx.ingress.kubernetes.io/auth-secret: basic-auth
+    nginx.ingress.kubernetes.io/auth-type: basic
+    cert-manager.io/cluster-issuer: letsencrypt-dev
+    # nginx.ingress.kubernetes.io/auth-realm: "Authentication Required" # <-- Thêm để hiển thị thông báo login
+
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - nosqlclient-dev.appota.net
+    secretName: nosqlclient-dev.appota.net-tls
+  rules:
+  - host: nosqlclient-dev.appota.net
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nosql-client
+            port:
+              number: 3000

@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nosql-client
+  namespace: dev-srd
+spec:
+  replicas: 1
+  serviceName: nosql-client # <-- Đổi thành nosql-client để đúng với Service
+  selector:
+    matchLabels:
+      app: nosql
+  template:
+    metadata:
+      labels:
+        app: nosql
+    spec:
+      containers:
+      - name: nosql
+        image: mongoclient/mongoclient
+        ports:
+        - name: nosql
+          containerPort: 3000
+          protocol: TCP
