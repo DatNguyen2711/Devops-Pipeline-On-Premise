@@ -64,3 +64,9 @@ metadata:
 type: Opaque
 data:
   MSSQL_SA_PASSWORD: RGF0TGFpZDIzNDU1NUBYeQ==
+---
+# kubectl create secret docker-registry my-dockerhub-secret \
+#   --docker-server=https://hub.docker.com/ \
+#   --docker-username=datnd2711 \
+#   --docker-password=dckr_pat_L-zYxI1kfRPBbc2wxdKDvN-ussc \
+
