@@ -1,7 +1,7 @@
 
 # 📈 Monitor .NET 8 Application on K8S Cluster (2 methods)
 
-## Using dotnet SDK integrated into .Net application
+## Method 1: using dotnet SDK integrated into .Net application
 
 ### 🧰 Technologies Used
 
@@ -78,7 +78,7 @@ helm -n monitoring install prometheus-grafana-stack -f values.yaml kube-promethe
 
 
 
-## Using Opentelemetry Auto-instrumentation
+## Method 2: using Opentelemetry Auto-instrumentation
 
 
 ## 🛠 Step 1: Pull `otel-collector` and `otel-operator` Chart
@@ -105,7 +105,7 @@ helm pull open-telemetry/opentelemetry-collector
 ```
 
 
-## ⚙️ Step 2: Config collector
+## ⚙️ Step 3: Config collector
 
 1. Select mode for collector (i using daemonset)
 
