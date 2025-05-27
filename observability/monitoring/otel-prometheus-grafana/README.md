@@ -271,7 +271,7 @@ helm upgrade prometheus-grafana-stack -n monitoring -f values.yaml kube-promethe
 
 ![alt text](image-10.png)
 
-#### ID of this dashboard is 19896 9 (for dotnet only)
+#### ID of this dashboard is 19896 (for dotnet only)
 
 ![alt text](image-11.png)
 ![alt text](image-12.png)
