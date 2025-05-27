@@ -1,5 +1,7 @@
 
-# 📈 Monitor .NET 8 Application on K8S Cluster
+# 📈 Monitor .NET 8 Application on K8S Cluster (2 methods)
+
+## Using dotnet SDK integrated into .Net application
 
 ### 🧰 Technologies Used
 
@@ -24,7 +26,7 @@ helm pull prometheus-community/kube-prometheus-stack
 
 ## ⚙️ Step 2: Configure Prometheus Scraping
 
-Thêm job `backend-metrics` vào phần `prometheus.prometheusSpec` trong file `values.yaml`:
+Add job `backend-metrics` into `prometheus.prometheusSpec` in  `values.yaml` file:
 
 ```yaml
 additionalScrapeConfigs: 
@@ -65,11 +67,211 @@ helm -n monitoring install prometheus-grafana-stack -f values.yaml kube-promethe
 
 ## 📊 Add `Max` and `Count` Columns in Grafana Panel
 
-- Truy cập vào phần **Legend** trong panel
-- Trong trường **Values**, chọn **Max** và **Count**
+- Access into **Legend** on panel
+- In field **Values**, select **Max** and **Count**
 
 ![alt text](image-8.png)
 
 ![alt text](image-5.png)
 
 ![alt text](image-7.png)
+
+
+
+## Using Opentelemetry Auto-instrumentation
+
+
+## 🛠 Step 1: Pull `otel-collector` and `otel-operator` Chart
+
+```bash 
+helm pull open-telemetry/opentelemetry-operator
+helm pull open-telemetry/opentelemetry-collector
+```
+
+## ⚙️ Step 2: Config operator
+
+1. Edit this field to choose repo for image pull
+
+```bash 
+  image:
+  collectorImage:
+    repository: "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-k8s"
+```    
+
+2. Install chart
+
+```bash
+  helm install otel-operator -n monitoring opentelemetry-operator/ -f values.yaml 
+```
+
+
+## ⚙️ Step 2: Config collector
+
+1. Select mode for collector (i using daemonset)
+
+```c++
+mode: "daemonset"
+```
+
+2. Config exporter, receivers, and processors
+
+```yaml
+config:
+  exporters:
+    prometheus:
+      endpoint: ${env:MY_POD_IP}:8889
+
+
+  receivers:
+
+    otlp:
+      protocols:
+        grpc:
+        http:
+          endpoint: 0.0.0.0:4318
+
+
+    pipelines:
+      logs:
+        exporters:
+          - debug
+        processors:
+          - memory_limiter
+          - batch
+        receivers:
+          - otlp
+      metrics:
+        exporters:
+          - prometheus
+        processors:
+          - memory_limiter
+          - batch
+        receivers:
+          - otlp
+```      
+
+3. Add image repo
+
+```bash
+image:
+  # If you want to use the core image `otel/opentelemetry-collector`, you also need to change `command.name` value to `otelcol`.
+  repository: "ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib"
+```
+
+4. Config port to expose metrics
+
+```bash 
+ports:
+    metrics:
+    # The metrics port is disabled by default. However you need to enable the port
+    # in order to use the ServiceMonitor (serviceMonitor.enabled) or PodMonitor (podMonitor.enabled).
+    enabled: true
+    containerPort: 8889
+    servicePort: 8889
+    protocol: TCP
+```
+
+5. Install chart 
+
+```bash
+helm install otel-collector -n monitoring  opentelemetry-collector/  -f values.yaml 
+```
+
+6. Injecting Auto-instrumentation
+
+- To monitoring Dotnet application, to just to add theese annotations into your deployments, daemonset,...
+
+```bash 
+
+backEnd:
+  replicaCount: 1
+  name: back-end
+  annotations:
+
+    # add annotations
+    sidecar.opentelemetry.io/inject: "true" 
+    instrumentation.opentelemetry.io/inject-dotnet: "true"
+
+  image:
+    repository: datnd2711/pharmacy-be
+    tag: prod-0.104
+    pullPolicy: IfNotPresent
+  imagePullSecrets:
+    name: my-dockerhub-secret
+  service:
+    name: back-end-service
+    type: ClusterIP 
+    port: 8080
+    targetPort: "http-backend"
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+```
+
+7. Create instrumentation for dotnet applications
+
+```bash 
+kubectl apply -f - <<EOF
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: demo-dotnet-instrumentation
+  namespace: myapp
+spec:
+  exporter:
+    endpoint: http://otel-collector-opentelemetry-collector.monitoring.svc.cluster.local:4317
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: '1'
+  dotnet:
+    env:
+      - name: OTEL_DOTNET_AUTO_TRACES_GRPCNETCLIENT_INSTRUMENTATION_ENABLED
+        value: "true"
+      - name: OTEL_DOTNET_AUTO_METRICS_PROCESS_INSTRUMENTATION_ENABLED
+        value: "true"
+EOF
+```
+> For others applications: [Configure Automatic Instrumentation](https://opentelemetry.io/docs/platforms/kubernetes/operator/automatic/#installation)
+
+
+
+7. Result after inject
+
+![alt text](image-9.png)
+
+
+8. Add prometheus job 
+
+- Default endpoint when using auto-Instrumentation will be **/metrics**
+
+```bash 
+    - job_name: 'otel-collector-metrics'
+      scheme: http
+      metrics_path: /metrics
+      static_configs:
+       - targets: ['otel-collector-opentelemetry-collector.monitoring.svc.cluster.local:8889']
+      # metric_relabel_configs:
+      #   - source_labels: [__name__]
+      #     action: keep
+      #     regex: 'http_server_*|kestrel_*|container_cpu_usage_seconds_total|container_memory_usage_bytes'
+      scrape_interval: 10s   
+________________________
+
+helm upgrade prometheus-grafana-stack -n monitoring -f values.yaml kube-prometheus-stack/      
+```       
+
+9. Results
+
+![alt text](image-10.png)
+
+#### ID of this dashboard is 19896 9 (for dotnet only)
+
+![alt text](image-11.png)
+![alt text](image-12.png)
