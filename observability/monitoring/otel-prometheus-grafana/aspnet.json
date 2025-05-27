@@ -25,7 +25,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 59,
+  "id": 30,
   "links": [],
   "panels": [
     {
@@ -102,7 +102,7 @@
         "legend": {
           "calcs": [
             "max",
-            "count"
+            "distinctCount"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -1532,7 +1532,7 @@
     }
   ],
   "preload": false,
-  "refresh": "",
+  "refresh": "5s",
   "schemaVersion": 40,
   "tags": [
     "dotnet",
@@ -1597,6 +1597,6 @@
   "timezone": "",
   "title": "ASP.NET",
   "uid": "KdDACDp4z",
-  "version": 3,
+  "version": 2,
   "weekStart": ""
 }
