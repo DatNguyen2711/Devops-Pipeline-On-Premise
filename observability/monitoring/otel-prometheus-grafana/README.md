@@ -9,7 +9,7 @@
 - **Prometheus**
 - **Grafana**
 
-![image](https://github.com/user-attachments/assets/7097feae-2e39-4d96-810c-9221cc4c953a)
+![image](https://github.com/user-attachments/assets/6b4ab7ac-296a-4d80-9252-54f263073b95)
 
 ---
 
