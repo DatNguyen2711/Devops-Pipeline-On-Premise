@@ -182,7 +182,6 @@ helm install otel-collector -n monitoring  opentelemetry-collector/  -f values.y
 - To monitoring Dotnet application, to just to add theese annotations into your deployments, daemonset,...
 
 ```bash 
-
 backEnd:
   replicaCount: 1
   name: back-end
@@ -214,7 +213,7 @@ backEnd:
 
 7. Create instrumentation for dotnet applications
 
-```bash 
+```javascript 
 kubectl apply -f - <<EOF
 apiVersion: opentelemetry.io/v1alpha1
 kind: Instrumentation
@@ -275,3 +274,90 @@ helm upgrade prometheus-grafana-stack -n monitoring -f values.yaml kube-promethe
 
 ![alt text](image-11.png)
 ![alt text](image-12.png)
+
+
+
+
+## Troubleshooting
+
+1. In case of metrics don't display in Grafana like the below picture but the app still running and scrape config still **Up** status in **Prometheus**:
+
+![alt text](image-13.png)
+
+![alt text](image-14.png)
+
+2. **Check logs of otel-operator pod**. If the logs display as:
+
+> There are no opentelemetry collector instance for ....
+
+3. Delete that pod manually
+
+4. You can use this cronjob for auto delete **Error opentelemetry operator pod**
+
+
+```go
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kill-otel-operator-on-error
+  namespace: monitoring
+spec:
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: otel-logs-cleaner
+          containers:
+          - name: checker
+            image: bitnami/kubectl:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "Checking otel-operator logs..."
+              for pod in $(kubectl get pods -n monitoring -l app.kubernetes.io/name=opentelemetry-operator -o jsonpath='{.items[*].metadata.name}'); do
+                if kubectl logs -n monitoring "$pod" | grep -i "error"; then
+                  echo "Found error in $pod logs. Deleting pod..."
+                  kubectl delete pod "$pod" -n monitoring
+                else
+                  echo "$pod is clean."
+                fi
+              done
+          restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: otel-logs-cleaner
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: otel-logs-cleaner-role
+  namespace: monitoring
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: otel-logs-cleaner-binding
+  namespace: monitoring
+subjects:
+- kind: ServiceAccount
+  name: otel-logs-cleaner
+  namespace: monitoring
+roleRef:
+  kind: Role
+  name: otel-logs-cleaner-role
+  apiGroup: rbac.authorization.k8s.io
+
+
+```
