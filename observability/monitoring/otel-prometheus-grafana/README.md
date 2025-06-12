@@ -223,7 +223,7 @@ metadata:
   namespace: myapp
 spec:
   exporter:
-    endpoint: http://otel-collector-opentelemetry-collector.monitoring.svc.cluster.local:4317
+    endpoint: http://otel-collector-opentelemetry-collector.monitoring.svc.cluster.local:4318
   propagators:
     - tracecontext
     - baggage
