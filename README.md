@@ -12,9 +12,7 @@ This project utilizes the following technologies:
 | <img src="https://static-00.iconduck.com/assets.00/harbor-icon-1018x1024-15bgc40q.png" alt="Harbor Registry" width="20" height="20"> **Harbor Registry** | Container registry               |
 | <img src="https://castrillo.gitlab.io/figaro/runner_logo.png" alt="Gitlab-CI" width="20" height="20"> **Gitlab-CI** | Continuous Integration           |
 | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Jenkins_logo.svg/1200px-Jenkins_logo.svg.png" alt="Jenkins" width="20" height="20"> **Jenkins** | Continuous Integration           |
-| <img src="https://manhha.dev/content/images/2022/03/00-featured-image-1.png" alt="Ubuntu" width="20" height="20"> **Ubuntu** | Operating System                 |
 | <img src="https://encore.dev/assets/resources/kubernetes_cover.png" alt="Kubernetes" width="20" height="20"> **Kubernetes** | Container orchestration          |
-| <img src="https://encore.dev/assets/resources/terraform_cover.png" alt="Terraform" width="20" height="20"> **Terraform** | Infrastructure as Code (IaC)     |
 | <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Groovy-logo.svg/640px-Groovy-logo.svg.png" alt="Groovy" width="20" height="20"> **Groovy** | Scripting (Jenkins pipeline script)             |
 | <img src="https://banner2.cleanpng.com/20180711/ysg/aawkk38yb.webp" alt="Helm" width="20" height="20"> **Helm** | Kubernetes package management    |
 | <img src="https://tenten.vn/tin-tuc/wp-content/uploads/2023/09/tao-video-AI-bang-D-ID.jpg" alt="VMWare" width="20" height="20"> **VMWare** | Virtualization (100% infra using this)                   |
