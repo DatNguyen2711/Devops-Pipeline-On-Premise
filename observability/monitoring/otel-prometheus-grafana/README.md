@@ -80,6 +80,9 @@ helm -n monitoring install prometheus-grafana-stack -f values.yaml kube-promethe
 
 ## Method 2: using Opentelemetry Auto-instrumentation
 
+![image](https://github.com/user-attachments/assets/bc4b326a-3685-4c57-9889-140d23db2515)
+
+
 
 ## 🛠 Step 1: Pull `otel-collector` and `otel-operator` Chart
 
